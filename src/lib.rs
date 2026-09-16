@@ -39,9 +39,9 @@
 //! assert!(ag.percent > 50.0);
 //! ```
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(missing_docs)]
 #![warn(rust_2018_idioms, missing_debug_implementations)]
-#![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod error;
 pub mod running;

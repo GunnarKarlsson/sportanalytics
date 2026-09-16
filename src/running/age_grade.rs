@@ -165,7 +165,7 @@ impl PerformanceLevel {
 /// in metres between the named standards.
 ///
 /// Age *factors* here remain a compact interpolation, not the official
-/// WMA/USATF grid. Treat [`age_grade`] percentages as estimates.
+/// WMA/USATF grid. Treat [`age_grade()`] percentages as estimates.
 ///
 /// ```
 /// use sportanalytics::running::{open_standard_secs, Distance, Gender};

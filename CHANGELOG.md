@@ -33,3 +33,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `open_standard_secs` documents 5K–marathon times as 2025-era road world records (USATF MLDR 2025 open standards), so percentages can run high versus older championship tables.
 - Training-zone docs note that published Daniels *Running Formula* charts will differ by a few seconds/km.
 - `running` module rustdoc includes the README function and zone tables so docs.rs stands alone.
+- docs.rs builds with `--cfg docsrs` and `doc_cfg`; CI rustdoc fails on warnings.

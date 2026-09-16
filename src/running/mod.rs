@@ -7,7 +7,7 @@
 //! | [`predict_times`] | Daniels invert, Riegel `T2=T1*(D2/D1)^1.06`, or Cameron |
 //! | [`predict_daniels_and_cameron`] | Daniels and Cameron in one call |
 //! | [`training_zones`] / [`training_zones_from_vdot`] | Daniels %VDOT pace bands (E/M/T/I/R) |
-//! | [`age_grade`] / [`age_equivalent`] | Compact WMA-style age factors + open standards |
+//! | [`age_grade()`] / [`age_equivalent()`] | Compact WMA-style age factors + open standards |
 //!
 //! Age and gender are used only by age grading. Daniels, Riegel, and Cameron
 //! predictions do not take them. Predict first, then pass a predicted time into
