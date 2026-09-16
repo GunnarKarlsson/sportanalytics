@@ -2,7 +2,7 @@
 
 use sportanalytics::running::{
     predict_daniels_and_cameron, predict_times, training_zones, vdot, vo2max_from_races, Distance,
-    PredictionModel, RaceTime,
+    LengthUnit, PredictionModel, RaceTime,
 };
 
 fn main() {
@@ -32,4 +32,13 @@ fn main() {
 
     let z = training_zones(five);
     println!("E {}  T {}  I {}", z.easy, z.threshold, z.interval);
+    println!("E miles {}", z.easy.display(LengthUnit::Mile));
+    println!("{z}");
+
+    let eight = RaceTime::from_hms(Distance::from_miles(8.0).unwrap(), 1, 0, 0).unwrap();
+    println!(
+        "8 mi in 1:00:00 → {} ({:.2} km)",
+        eight.pace(),
+        eight.distance().kilometers()
+    );
 }
