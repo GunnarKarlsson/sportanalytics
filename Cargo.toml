@@ -9,6 +9,7 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/GunnarKarlsson/sports-analytics"
 homepage = "https://github.com/GunnarKarlsson/sports-analytics"
+documentation = "https://docs.rs/sportanalytics"
 keywords = ["running", "vo2max", "vdot", "age-grade", "race-prediction"]
 categories = ["science"]
 include = ["src/**/*", "Cargo.toml", "LICENSE", "README.md"]
