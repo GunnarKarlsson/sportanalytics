@@ -56,6 +56,14 @@ impl PredictedTimes {
     /// Named distances use the values computed by [`predict_times`]. Custom
     /// distances re-run the model; Daniels inversion can return
     /// [`Error::UnsolvableTime`].
+    ///
+    /// ```
+    /// use sportanalytics::running::{predict_times, Distance, PredictionModel, RaceTime};
+    ///
+    /// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+    /// let pred = predict_times(five, PredictionModel::DanielsVdot).unwrap();
+    /// assert!((pred.seconds(Distance::FiveK).unwrap() - 1200.0).abs() < 0.5);
+    /// ```
     pub fn seconds(&self, d: Distance) -> Result<f64, Error> {
         Ok(match d {
             Distance::ThreeK => self.three_k,
@@ -112,6 +120,14 @@ pub struct DualPredictedTimes {
 ///
 /// [`PredictionModel::DanielsVdot`] returns [`Error::UnsolvableTime`] when any
 /// named distance has no root in the 2–12 min/km inversion bracket.
+///
+/// ```
+/// use sportanalytics::running::{predict_times, Distance, PredictionModel, RaceTime};
+///
+/// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+/// let pred = predict_times(five, PredictionModel::DanielsVdot).unwrap();
+/// assert_eq!(pred.formatted(Distance::FiveK).unwrap(), "20:00");
+/// ```
 pub fn predict_times(known: RaceTime, model: PredictionModel) -> Result<PredictedTimes, Error> {
     let vd = vdot(known);
     let secs = |target: Distance| match model {
@@ -132,6 +148,14 @@ pub fn predict_times(known: RaceTime, model: PredictionModel) -> Result<Predicte
 }
 
 /// Daniels VDOT equivalents and Cameron-scaled times from the same race.
+///
+/// ```
+/// use sportanalytics::running::{predict_daniels_and_cameron, Distance, RaceTime};
+///
+/// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+/// let both = predict_daniels_and_cameron(five).unwrap();
+/// assert_eq!(both.daniels.vdot, both.cameron.vdot);
+/// ```
 pub fn predict_daniels_and_cameron(known: RaceTime) -> Result<DualPredictedTimes, Error> {
     Ok(DualPredictedTimes {
         vdot: vdot(known),
@@ -141,11 +165,27 @@ pub fn predict_daniels_and_cameron(known: RaceTime) -> Result<DualPredictedTimes
 }
 
 /// Riegel: `T2 = T1 × (D2 / D1)^k` with `k = 1.06`.
+///
+/// ```
+/// use sportanalytics::running::{riegel, Distance, RaceTime};
+///
+/// let five = RaceTime::from_hms(Distance::FiveK, 0, 25, 0).unwrap();
+/// let ten = riegel(five, Distance::TenK);
+/// assert!((ten - 3127.0).abs() < 5.0);
+/// ```
 pub fn riegel(known: RaceTime, target: Distance) -> f64 {
     riegel_with_exponent(known, target, 1.06)
 }
 
 /// Riegel power law with a caller-supplied exponent.
+///
+/// ```
+/// use sportanalytics::running::{riegel_with_exponent, Distance, RaceTime};
+///
+/// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+/// let ten = riegel_with_exponent(five, Distance::TenK, 1.0);
+/// assert!((ten - 2400.0).abs() < 1e-9);
+/// ```
 pub fn riegel_with_exponent(known: RaceTime, target: Distance, k: f64) -> f64 {
     let ratio = target.meters() / known.distance().meters();
     known.seconds() * ratio.powf(k)
@@ -153,6 +193,13 @@ pub fn riegel_with_exponent(known: RaceTime, target: Distance, k: f64) -> f64 {
 
 /// Cameron (1996-ish): `T2 = T1 × (D2/D1) × f(D1)/f(D2)`
 /// with `f(x) = 13.49681 − 0.000030363 x + 835.7114 / x^0.7905`, `x` in metres.
+///
+/// ```
+/// use sportanalytics::running::{cameron, Distance, RaceTime};
+///
+/// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+/// assert!((cameron(five, Distance::FiveK) - five.seconds()).abs() < 1e-9);
+/// ```
 pub fn cameron(known: RaceTime, target: Distance) -> f64 {
     let d1 = known.distance().meters();
     let d2 = target.meters();

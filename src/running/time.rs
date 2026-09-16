@@ -29,6 +29,13 @@ impl RaceTime {
     ///
     /// Returns [`Error::InvalidHms`] when minutes or seconds are ≥ 60, and
     /// [`Error::NonPositiveTime`] when the total duration is zero.
+    ///
+    /// ```
+    /// use sportanalytics::running::{Distance, RaceTime};
+    ///
+    /// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+    /// assert_eq!(five.seconds(), 1200.0);
+    /// ```
     pub fn from_hms(
         distance: Distance,
         hours: u64,
@@ -48,6 +55,13 @@ impl RaceTime {
     ///
     /// Returns [`Error::NonPositiveTime`] when `seconds` is non-finite or not
     /// strictly positive.
+    ///
+    /// ```
+    /// use sportanalytics::running::{Distance, RaceTime};
+    ///
+    /// let five = RaceTime::from_secs(Distance::FiveK, 1200.0).unwrap();
+    /// assert_eq!(five.minutes(), 20.0);
+    /// ```
     pub fn from_secs(distance: Distance, seconds: f64) -> Result<Self, Error> {
         if !seconds.is_finite() || seconds <= 0.0 {
             return Err(Error::NonPositiveTime);

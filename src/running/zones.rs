@@ -66,6 +66,14 @@ fn range(vdot: f64, lo: f64, hi: f64) -> PaceRange {
 }
 
 /// Training zones from an already-known VDOT.
+///
+/// ```
+/// use sportanalytics::running::{training_zones_from_vdot, vdot, Distance, RaceTime};
+///
+/// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+/// let z = training_zones_from_vdot(vdot(five));
+/// assert!(z.easy.easy_end > z.easy.hard_end);
+/// ```
 pub fn training_zones_from_vdot(vdot: Vdot) -> TrainingZones {
     let v = vdot.value();
     TrainingZones {
@@ -79,11 +87,25 @@ pub fn training_zones_from_vdot(vdot: Vdot) -> TrainingZones {
 }
 
 /// Training zones from a single race result.
+///
+/// ```
+/// use sportanalytics::running::{format_pace, training_zones, Distance, RaceTime};
+///
+/// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+/// let z = training_zones(five);
+/// assert_eq!(format_pace(z.easy.hard_end), "4:54 /km");
+/// ```
 pub fn training_zones(race: RaceTime) -> TrainingZones {
     training_zones_from_vdot(vdot(race))
 }
 
 /// Format a pace as `m:ss /km`.
+///
+/// ```
+/// use sportanalytics::running::format_pace;
+///
+/// assert_eq!(format_pace(294.0), "4:54 /km");
+/// ```
 pub fn format_pace(sec_per_km: f64) -> String {
     let total = sec_per_km.round() as u64;
     format!("{}:{:02} /km", total / 60, total % 60)

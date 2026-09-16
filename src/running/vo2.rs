@@ -27,6 +27,13 @@ pub struct Vdot(f64);
 
 impl Vdot {
     /// Construct a VDOT from a positive finite value.
+    ///
+    /// ```
+    /// use sportanalytics::running::Vdot;
+    ///
+    /// assert!(Vdot::new(50.0).is_ok());
+    /// assert!(Vdot::new(0.0).is_err());
+    /// ```
     pub fn new(value: f64) -> Result<Self, Error> {
         if value.is_finite() && value > 0.0 {
             Ok(Self(value))
@@ -41,6 +48,13 @@ impl Vdot {
     }
 
     /// VDOT implied by a single race result.
+    ///
+    /// ```
+    /// use sportanalytics::running::{vdot, Distance, RaceTime, Vdot};
+    ///
+    /// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+    /// assert_eq!(Vdot::from_race(five), vdot(five));
+    /// ```
     pub fn from_race(race: RaceTime) -> Self {
         Self::from_raw(vdot_value(race))
     }
@@ -84,16 +98,35 @@ pub struct Vo2Estimate {
 }
 
 /// Daniels oxygen cost of running at velocity `v` (m/min). ml/kg/min.
+///
+/// ```
+/// use sportanalytics::running::oxygen_cost;
+///
+/// assert!(oxygen_cost(250.0) > 40.0);
+/// ```
 pub fn oxygen_cost(v_m_per_min: f64) -> f64 {
     -4.60 + 0.182258 * v_m_per_min + 0.000104 * v_m_per_min * v_m_per_min
 }
 
 /// Sustainable fraction of VO2max for a race lasting `t` minutes.
+///
+/// ```
+/// use sportanalytics::running::percent_vo2max;
+///
+/// assert!(percent_vo2max(15.0) > percent_vo2max(30.0));
+/// ```
 pub fn percent_vo2max(t_min: f64) -> f64 {
     0.8 + 0.1894393 * (-0.012778 * t_min).exp() + 0.2989558 * (-0.1932605 * t_min).exp()
 }
 
 /// Invert the oxygen-cost curve: velocity (m/min) that costs `vo2` ml/kg/min.
+///
+/// ```
+/// use sportanalytics::running::{oxygen_cost, velocity_from_vo2};
+///
+/// let v = 250.0;
+/// assert!((velocity_from_vo2(oxygen_cost(v)) - v).abs() < 1e-6);
+/// ```
 pub fn velocity_from_vo2(vo2: f64) -> f64 {
     // 0.000104 v² + 0.182258 v - (vo2 + 4.60) = 0
     let a = 0.000104;
@@ -110,11 +143,27 @@ fn vdot_value(race: RaceTime) -> f64 {
 }
 
 /// Effective VO2max (VDOT) from one race.
+///
+/// ```
+/// use sportanalytics::running::{vdot, Distance, RaceTime};
+///
+/// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+/// assert!((vdot(five).value() - 50.0).abs() < 0.4);
+/// ```
 pub fn vdot(race: RaceTime) -> Vdot {
     Vdot::from_race(race)
 }
 
 /// Combine one or more race times into a VO2max / VDOT estimate.
+///
+/// ```
+/// use sportanalytics::running::{vo2max_from_races, Distance, RaceTime};
+///
+/// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+/// let ten = RaceTime::from_hms(Distance::TenK, 0, 42, 0).unwrap();
+/// let vo2 = vo2max_from_races(&[five, ten]).unwrap();
+/// assert!(vo2.best.value() > 45.0);
+/// ```
 pub fn vo2max_from_races(races: &[RaceTime]) -> Result<Vo2Estimate, Error> {
     let per_race: Vec<(Distance, Vdot)> = races.iter().map(|r| (r.distance(), vdot(*r))).collect();
     let best = per_race
@@ -143,6 +192,14 @@ fn implied_vdot(meters: f64, time_secs: f64) -> f64 {
 /// times from **2 min/km** (elite) to **12 min/km** (very slow). Returns
 /// [`Error::UnsolvableTime`] when no root lies in that bracket — extreme
 /// VDOTs are not clamped to the endpoints.
+///
+/// ```
+/// use sportanalytics::running::{time_from_vdot, vdot, Distance, RaceTime};
+///
+/// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+/// let secs = time_from_vdot(vdot(five), Distance::FiveK).unwrap();
+/// assert!((secs - 1200.0).abs() < 0.5);
+/// ```
 pub fn time_from_vdot(vdot: Vdot, distance: Distance) -> Result<f64, Error> {
     let meters = distance.meters();
     let vd = vdot.value();

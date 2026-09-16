@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Copy` / `Display` on core result types; `FromStr` for `Distance` (`"5K"`, `"HM"`, `"marathon"`).
 - Optional `serde` feature for serializing public types. Default builds stay dependency-free.
 - Zero runtime dependencies (`std` only) unless `serde` is enabled.
+- Rustdoc examples on public running functions (`vdot`, `predict_times`, `training_zones`, `age_grade`, and the rest of the module API).
 
 ### Changed
 

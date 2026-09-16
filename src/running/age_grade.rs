@@ -110,6 +110,12 @@ pub enum PerformanceLevel {
 
 impl PerformanceLevel {
     /// Map a percentage onto the usual age-grade bands.
+    ///
+    /// ```
+    /// use sportanalytics::running::PerformanceLevel;
+    ///
+    /// assert_eq!(PerformanceLevel::from_percent(91.0), PerformanceLevel::WorldClass);
+    /// ```
     pub fn from_percent(p: f64) -> Self {
         if p >= 100.0 {
             Self::WorldRecord
@@ -160,6 +166,12 @@ impl PerformanceLevel {
 ///
 /// Age *factors* here remain a compact interpolation, not the official
 /// WMA/USATF grid. Treat [`age_grade`] percentages as estimates.
+///
+/// ```
+/// use sportanalytics::running::{open_standard_secs, Distance, Gender};
+///
+/// assert_eq!(open_standard_secs(Distance::Marathon, Gender::Male), 7235.0);
+/// ```
 pub fn open_standard_secs(distance: Distance, gender: Gender) -> f64 {
     match distance {
         Distance::Custom { meters, .. } => interpolate_open_standard(meters, gender),
@@ -265,6 +277,12 @@ fn factor_knots(gender: Gender) -> &'static [(u8, f64)] {
 }
 
 /// Age factor in `(0, 1]`. Prime years (20–34) are `1.0`. Ages are clamped to 8–100.
+///
+/// ```
+/// use sportanalytics::running::{age_factor, Gender};
+///
+/// assert!((age_factor(28, Gender::Male) - 1.0).abs() < 1e-9);
+/// ```
 pub fn age_factor(age: u8, gender: Gender) -> f64 {
     let knots = factor_knots(gender);
     let age = age.clamp(8, 100);
@@ -283,6 +301,14 @@ pub fn age_factor(age: u8, gender: Gender) -> f64 {
 }
 
 /// Age-grade a performance and optionally convert it to an equivalent time at age `n`.
+///
+/// ```
+/// use sportanalytics::running::{age_grade, Distance, Gender, RaceTime};
+///
+/// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+/// let ag = age_grade(five, 42, Gender::Male, Some(25));
+/// assert!(ag.percent > 50.0);
+/// ```
 pub fn age_grade(
     race: RaceTime,
     age: u8,
@@ -306,6 +332,14 @@ pub fn age_grade(
 }
 
 /// Same performance, expressed as a finish time at age `n`.
+///
+/// ```
+/// use sportanalytics::running::{age_equivalent, Distance, Gender, RaceTime};
+///
+/// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+/// let as_25 = age_equivalent(five, 42, Gender::Male, 25);
+/// assert!(as_25 < five.seconds());
+/// ```
 pub fn age_equivalent(race: RaceTime, age: u8, gender: Gender, target_age: u8) -> f64 {
     race.seconds() * age_factor(age, gender) / age_factor(target_age, gender)
 }

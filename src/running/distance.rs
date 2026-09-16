@@ -44,6 +44,12 @@ impl Hash for Distance {
 
 impl Distance {
     /// Named road / track distances, shortest to longest.
+    ///
+    /// ```
+    /// use sportanalytics::running::Distance;
+    ///
+    /// assert_eq!(Distance::all()[0], Distance::ThreeK);
+    /// ```
     pub const fn all() -> [Distance; 5] {
         [
             Self::ThreeK,
@@ -55,11 +61,25 @@ impl Distance {
     }
 
     /// A custom distance labelled `"custom"`.
+    ///
+    /// ```
+    /// use sportanalytics::running::Distance;
+    ///
+    /// let d = Distance::from_meters(1_500.0).unwrap();
+    /// assert_eq!(d.meters(), 1_500.0);
+    /// ```
     pub fn from_meters(meters: f64) -> Result<Self, Error> {
         Self::custom(meters, "custom")
     }
 
     /// A custom distance with a display label such as `"8K"` or `"10 mile"`.
+    ///
+    /// ```
+    /// use sportanalytics::running::Distance;
+    ///
+    /// let eight = Distance::custom(8_000.0, "8K").unwrap();
+    /// assert_eq!(eight.to_string(), "8K");
+    /// ```
     pub fn custom(meters: f64, label: &'static str) -> Result<Self, Error> {
         if meters.is_finite() && meters > 0.0 {
             Ok(Self::Custom { meters, label })
