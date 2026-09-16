@@ -36,14 +36,23 @@
 //! ```
 
 #![deny(missing_docs)]
+#![warn(rust_2018_idioms, missing_debug_implementations)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod error;
 pub mod running;
 
 pub use error::Error;
-pub use running::{
-    age_equivalent, age_grade, predict_daniels_and_cameron, predict_times, training_zones,
-    training_zones_from_vdot, vdot, vo2max_from_races, AgeGradeResult, Distance,
-    DualPredictedTimes, Gender, PaceRange, PerformanceLevel, PredictedTimes, PredictionModel,
-    RaceTime, TrainingZones, Vdot, Vo2Estimate,
-};
+
+/// Common running types and functions.
+///
+/// Prefer [`crate::running`] when adding another sport so names stay scoped.
+pub mod prelude {
+    pub use crate::running::{
+        age_equivalent, age_grade, predict_daniels_and_cameron, predict_times, training_zones,
+        training_zones_from_vdot, vdot, vo2max_from_races, AgeGradeResult, Distance,
+        DualPredictedTimes, Gender, PaceRange, PerformanceLevel, PredictedTimes, PredictionModel,
+        RaceTime, TrainingZones, Vdot, Vo2Estimate,
+    };
+    pub use crate::Error;
+}

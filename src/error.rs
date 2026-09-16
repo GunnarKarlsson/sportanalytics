@@ -6,7 +6,7 @@ use std::fmt;
 pub enum Error {
     /// A race time was zero, negative, or non-finite.
     NonPositiveTime,
-    /// [`crate::vo2max_from_races`] was called with an empty slice.
+    /// [`crate::running::vo2max_from_races`] was called with an empty slice.
     EmptyRaces,
     /// A VDOT value was non-positive or non-finite.
     InvalidVdot,

@@ -19,7 +19,7 @@ Then:
 use sportanalytics::running::*;
 ```
 
-The same types are re-exported from the crate root (`sportanalytics::Distance`, `sportanalytics::vdot`, …).
+The same items are also available from `sportanalytics::prelude`. The crate root re-exports only `sportanalytics::Error`.
 
 ## Running
 
@@ -172,7 +172,7 @@ The running module implements published equations. It is not copied from another
 
 ## Layout for more sports
 
-Add `src/cycling/`, `src/swimming/`, etc., and re-export from `lib.rs`.
+Add `src/cycling/`, `src/swimming/`, etc., and export them as `sportanalytics::cycling` / `sportanalytics::swimming`. Do not dump new sports onto the crate root — `Distance` will not stay unique.
 
 ## License
 
