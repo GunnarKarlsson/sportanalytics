@@ -150,7 +150,7 @@ println!(
 );
 ```
 
-`age_equivalent(race, age, gender, target_age)` returns only the equivalent finish time in seconds.
+`age_equivalent(race, age, gender, target_age)` returns only the equivalent finish time in seconds. `Gender` selects WMA male/female table standards, not a general gender model.
 
 Performance bands: ≥100% world-record level, ≥90% world class, ≥80% national, ≥70% regional, ≥60% local, ≥50% recreational, else developing.
 

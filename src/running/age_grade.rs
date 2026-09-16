@@ -17,13 +17,17 @@ use std::fmt;
 use super::time::format_hms;
 use super::{Distance, RaceTime};
 
-/// Sex used by the age-grading tables.
+/// WMA male/female standards, not a general gender model.
+///
+/// World Masters Athletics (and similar) age-grade tables are published as two
+/// sex categories. [`Gender::Male`] and [`Gender::Female`] select those open
+/// standards and age factors.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Gender {
-    /// Male / men open standards and age factors.
+    /// Male WMA-style open standards and age factors.
     Male,
-    /// Female / women open standards and age factors.
+    /// Female WMA-style open standards and age factors.
     Female,
 }
 
