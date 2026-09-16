@@ -33,3 +33,14 @@ toolchain. Do not raise MSRV without a reason in the PR.
 - Do not re-export new sports from the crate root. Add `src/<sport>/` and
   `sportanalytics::<sport>`.
 - User-visible API or behavior changes: a `[Unreleased]` note in `CHANGELOG.md`.
+
+## Release
+
+Tag `vX.Y.Z` must match `Cargo.toml`. Pushing that tag creates a GitHub Release
+whose notes are the matching `CHANGELOG.md` section. Do the first
+`cargo publish` by hand; do not put a crates.io token in GitHub Actions yet.
+
+1. `Cargo.toml` version is `X.Y.Z`.
+2. Move `[Unreleased]` items into `## [X.Y.Z] - YYYY-MM-DD` in `CHANGELOG.md`.
+3. `cargo publish --dry-run`, then `cargo publish`.
+4. `git tag vX.Y.Z && git push origin vX.Y.Z`
