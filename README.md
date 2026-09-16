@@ -160,6 +160,7 @@ Performance bands: ≥100% world-record level, ≥90% world class, ≥80% nation
 - Age factors are a WMA-style *approximation*, not official World Masters Athletics or USATF scoring tables.
 - Predictions assume a flat, all-out effort and similar training specificity.
 - No crate dependencies; all math is `std`.
+- `Cargo.lock` is committed so clones and CI share a pinned graph. Dependents of the library still ignore it and resolve from `Cargo.toml`.
 
 ## Attribution
 
