@@ -10,6 +10,8 @@ pub enum Error {
     EmptyRaces,
     /// A VDOT value was non-positive or non-finite.
     InvalidVdot,
+    /// A custom distance was zero, negative, or non-finite.
+    InvalidDistance,
 }
 
 impl fmt::Display for Error {
@@ -18,6 +20,9 @@ impl fmt::Display for Error {
             Self::NonPositiveTime => f.write_str("race time must be positive"),
             Self::EmptyRaces => f.write_str("at least one race time is required"),
             Self::InvalidVdot => f.write_str("VDOT must be a positive finite value"),
+            Self::InvalidDistance => {
+                f.write_str("distance must be a positive finite number of metres")
+            }
         }
     }
 }
@@ -41,6 +46,10 @@ mod tests {
         assert_eq!(
             Error::InvalidVdot.to_string(),
             "VDOT must be a positive finite value"
+        );
+        assert_eq!(
+            Error::InvalidDistance.to_string(),
+            "distance must be a positive finite number of metres"
         );
     }
 

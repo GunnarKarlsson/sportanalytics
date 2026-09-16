@@ -22,13 +22,18 @@ pub enum PredictionModel {
     Cameron,
 }
 
-/// Predicted finish times at the five supported distances, in seconds.
+/// Predicted finish times at the five named distances, in seconds.
+///
+/// [`Self::seconds`] also works for [`Distance::Custom`] by re-running the same
+/// model from [`Self::source`].
 #[derive(Debug, Clone, PartialEq)]
 pub struct PredictedTimes {
     /// Model that produced these times.
     pub model: PredictionModel,
     /// VDOT implied by the input race (always computed; used by Daniels).
     pub vdot: Vdot,
+    /// Race that was scaled.
+    pub source: RaceTime,
     /// Predicted 3K time in seconds.
     pub three_k: f64,
     /// Predicted 5K time in seconds.
@@ -50,6 +55,11 @@ impl PredictedTimes {
             Distance::TenK => self.ten_k,
             Distance::HalfMarathon => self.half_marathon,
             Distance::Marathon => self.marathon,
+            Distance::Custom { .. } => match self.model {
+                PredictionModel::DanielsVdot => time_from_vdot(self.vdot, d),
+                PredictionModel::Riegel => riegel(self.source, d),
+                PredictionModel::Cameron => cameron(self.source, d),
+            },
         }
     }
 
@@ -84,6 +94,7 @@ pub fn predict_times(known: RaceTime, model: PredictionModel) -> PredictedTimes 
     PredictedTimes {
         model,
         vdot: vd,
+        source: known,
         three_k: secs(Distance::ThreeK),
         five_k: secs(Distance::FiveK),
         ten_k: secs(Distance::TenK),
@@ -205,5 +216,15 @@ mod tests {
         assert!(
             (riegel.seconds(Distance::Marathon) - daniels.seconds(Distance::Marathon)).abs() > 1.0
         );
+    }
+
+    #[test]
+    fn custom_distance_scales_with_riegel() {
+        let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let eight = Distance::custom(8_000.0, "8K").unwrap();
+        let pred = predict_times(five, PredictionModel::Riegel);
+        let expected = riegel(five, eight);
+        assert!((pred.seconds(eight) - expected).abs() < 1e-9);
+        assert_eq!(pred.source, five);
     }
 }

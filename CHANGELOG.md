@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Daniels-style training zones derived by inverting the oxygen-cost equations at fixed %VDOT (not copied pace tables).
 - Compact WMA-style age-grade approximation with open-equivalent and age-equivalent times.
 - Typed public surface: `Distance`, `RaceTime`, `Vdot`, `Error`.
+- Custom race distances via `Distance::from_meters` / `Distance::custom`.
 - Zero runtime dependencies (`std` only).
 
 ### Changed

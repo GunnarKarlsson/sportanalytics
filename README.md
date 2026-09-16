@@ -35,13 +35,13 @@ Age and gender are used only by age grading. Daniels, Riegel, and Cameron predic
 
 ### Types
 
-**`Distance`** — `ThreeK`, `FiveK`, `TenK`, `HalfMarathon`, `Marathon`. Metres come from `Distance::meters()` (half marathon is 21,097.5 m; marathon is 42,195 m).
+**`Distance`** — `ThreeK`, `FiveK`, `TenK`, `HalfMarathon`, `Marathon`, or `Distance::from_meters` / `Distance::custom` for other lengths (1500 m, 8K, 10 mile, …). Metres come from `Distance::meters()` (half marathon is 21,097.5 m; marathon is 42,195 m).
 
 **`RaceTime`** — a distance plus a positive finish time. Construct with `from_hms`, `from_secs`, or `new` (`std::time::Duration`). Invalid times return `Error::NonPositiveTime`.
 
 **`Vdot`** — newtype around a positive finite Daniels VDOT. Inner math is still `f64`; the wrapper is used at API edges (`vdot`, `time_from_vdot`, `Vo2Estimate`, `training_zones_from_vdot`) so a VDOT is not confused with seconds or m/min. Cameron/Riegel times are *not* VDOT values.
 
-**`Error`** — `NonPositiveTime`, `EmptyRaces`, `InvalidVdot`. Implements `std::error::Error`.
+**`Error`** — `NonPositiveTime`, `EmptyRaces`, `InvalidVdot`, `InvalidDistance`. Implements `std::error::Error`.
 
 ### VDOT / VO2max
 

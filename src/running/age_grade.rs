@@ -110,7 +110,16 @@ impl PerformanceLevel {
 ///
 /// 5K–marathon aligned with commonly cited WMA/USATF open standards.
 /// 3K uses a track-adjacent open standard (no official road 3K table).
+/// [`Distance::Custom`] is linearly interpolated (or extrapolated) in metres
+/// between those named standards.
 pub fn open_standard_secs(distance: Distance, gender: Gender) -> f64 {
+    match distance {
+        Distance::Custom { meters, .. } => interpolate_open_standard(meters, gender),
+        named => named_open_standard_secs(named, gender),
+    }
+}
+
+fn named_open_standard_secs(distance: Distance, gender: Gender) -> f64 {
     match (gender, distance) {
         (Gender::Male, Distance::ThreeK) => 440.0,         // 7:20
         (Gender::Male, Distance::FiveK) => 769.0,          // 12:49
@@ -122,7 +131,46 @@ pub fn open_standard_secs(distance: Distance, gender: Gender) -> f64 {
         (Gender::Female, Distance::TenK) => 1_726.0,       // 28:46
         (Gender::Female, Distance::HalfMarathon) => 3_772.0, // 1:02:52
         (Gender::Female, Distance::Marathon) => 7_796.0,   // 2:09:56
+        (_, Distance::Custom { .. }) => unreachable!("named distances only"),
     }
+}
+
+fn interpolate_open_standard(meters: f64, gender: Gender) -> f64 {
+    let named = Distance::all();
+    let std = |d: Distance| named_open_standard_secs(d, gender);
+    if meters <= named[0].meters() {
+        return lerp(
+            named[0].meters(),
+            std(named[0]),
+            named[1].meters(),
+            std(named[1]),
+            meters,
+        );
+    }
+    for pair in named.windows(2) {
+        if meters <= pair[1].meters() {
+            return lerp(
+                pair[0].meters(),
+                std(pair[0]),
+                pair[1].meters(),
+                std(pair[1]),
+                meters,
+            );
+        }
+    }
+    let last = named.len() - 1;
+    lerp(
+        named[last - 1].meters(),
+        std(named[last - 1]),
+        named[last].meters(),
+        std(named[last]),
+        meters,
+    )
+}
+
+fn lerp(x0: f64, y0: f64, x1: f64, y1: f64, x: f64) -> f64 {
+    let t = (x - x0) / (x1 - x0);
+    y0 + t * (y1 - y0)
 }
 
 /// Compact age-factor knots (age, factor). Linearly interpolated.
@@ -324,5 +372,15 @@ mod tests {
             open_standard_secs(Distance::FiveK, Gender::Female)
                 > open_standard_secs(Distance::FiveK, Gender::Male)
         );
+    }
+
+    #[test]
+    fn custom_open_standard_sits_between_named_neighbours() {
+        let eight = Distance::custom(8_000.0, "8K").unwrap();
+        let s = open_standard_secs(eight, Gender::Male);
+        let five = open_standard_secs(Distance::FiveK, Gender::Male);
+        let ten = open_standard_secs(Distance::TenK, Gender::Male);
+        assert!(s > five);
+        assert!(s < ten);
     }
 }

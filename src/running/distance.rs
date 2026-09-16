@@ -1,5 +1,9 @@
-/// Supported road / track distances.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+use std::hash::{Hash, Hasher};
+
+use crate::Error;
+
+/// Road / track distance, including a caller-supplied custom length.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Distance {
     /// 3,000 metres (track-adjacent; there is no official road 3K standard).
     ThreeK,
@@ -11,21 +15,30 @@ pub enum Distance {
     HalfMarathon,
     /// Marathon, 42,195 metres.
     Marathon,
+    /// Any positive finite length. Prefer [`Distance::from_meters`] or
+    /// [`Distance::custom`] so invalid values are rejected.
+    Custom {
+        /// Length in metres.
+        meters: f64,
+        /// Short display label (for example `"8K"`).
+        label: &'static str,
+    },
+}
+
+impl Eq for Distance {}
+
+impl Hash for Distance {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+        if let Self::Custom { meters, label } = *self {
+            meters.to_bits().hash(state);
+            label.hash(state);
+        }
+    }
 }
 
 impl Distance {
-    /// Official distance in metres.
-    pub const fn meters(self) -> f64 {
-        match self {
-            Self::ThreeK => 3_000.0,
-            Self::FiveK => 5_000.0,
-            Self::TenK => 10_000.0,
-            Self::HalfMarathon => 21_097.5,
-            Self::Marathon => 42_195.0,
-        }
-    }
-
-    /// Every supported distance, shortest to longest.
+    /// Named road / track distances, shortest to longest.
     pub const fn all() -> [Distance; 5] {
         [
             Self::ThreeK,
@@ -36,7 +49,34 @@ impl Distance {
         ]
     }
 
-    /// Short label used in display output (`3K`, `5K`, `10K`, `HM`, `FM`).
+    /// A custom distance labelled `"custom"`.
+    pub fn from_meters(meters: f64) -> Result<Self, Error> {
+        Self::custom(meters, "custom")
+    }
+
+    /// A custom distance with a display label such as `"8K"` or `"10 mile"`.
+    pub fn custom(meters: f64, label: &'static str) -> Result<Self, Error> {
+        if meters.is_finite() && meters > 0.0 {
+            Ok(Self::Custom { meters, label })
+        } else {
+            Err(Error::InvalidDistance)
+        }
+    }
+
+    /// Distance in metres.
+    pub const fn meters(self) -> f64 {
+        match self {
+            Self::ThreeK => 3_000.0,
+            Self::FiveK => 5_000.0,
+            Self::TenK => 10_000.0,
+            Self::HalfMarathon => 21_097.5,
+            Self::Marathon => 42_195.0,
+            Self::Custom { meters, .. } => meters,
+        }
+    }
+
+    /// Short label used in display output (`3K`, `5K`, `10K`, `HM`, `FM`, or the
+    /// custom label).
     pub const fn label(self) -> &'static str {
         match self {
             Self::ThreeK => "3K",
@@ -44,6 +84,7 @@ impl Distance {
             Self::TenK => "10K",
             Self::HalfMarathon => "HM",
             Self::Marathon => "FM",
+            Self::Custom { label, .. } => label,
         }
     }
 }
@@ -77,5 +118,26 @@ mod tests {
         assert_eq!(Distance::TenK.label(), "10K");
         assert_eq!(Distance::HalfMarathon.label(), "HM");
         assert_eq!(Distance::Marathon.label(), "FM");
+    }
+
+    #[test]
+    fn custom_from_meters() {
+        let eight = Distance::custom(8_000.0, "8K").unwrap();
+        assert_eq!(eight.meters(), 8_000.0);
+        assert_eq!(eight.label(), "8K");
+        let anon = Distance::from_meters(1_500.0).unwrap();
+        assert_eq!(anon.label(), "custom");
+        assert_eq!(anon.meters(), 1_500.0);
+    }
+
+    #[test]
+    fn custom_rejects_non_positive() {
+        assert_eq!(Distance::from_meters(0.0), Err(Error::InvalidDistance));
+        assert_eq!(Distance::from_meters(-1.0), Err(Error::InvalidDistance));
+        assert_eq!(Distance::from_meters(f64::NAN), Err(Error::InvalidDistance));
+        assert_eq!(
+            Distance::from_meters(f64::INFINITY),
+            Err(Error::InvalidDistance)
+        );
     }
 }
