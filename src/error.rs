@@ -15,6 +15,8 @@ pub enum Error {
     InvalidDistance,
     /// A distance string was not a named distance or a positive length.
     UnrecognizedDistance,
+    /// `from_hms` was given minutes or seconds ≥ 60.
+    InvalidHms,
 }
 
 impl fmt::Display for Error {
@@ -27,6 +29,7 @@ impl fmt::Display for Error {
                 f.write_str("distance must be a positive finite number of metres")
             }
             Self::UnrecognizedDistance => f.write_str("unrecognized distance"),
+            Self::InvalidHms => f.write_str("minutes and seconds must be less than 60"),
         }
     }
 }
@@ -58,6 +61,10 @@ mod tests {
         assert_eq!(
             Error::UnrecognizedDistance.to_string(),
             "unrecognized distance"
+        );
+        assert_eq!(
+            Error::InvalidHms.to_string(),
+            "minutes and seconds must be less than 60"
         );
     }
 

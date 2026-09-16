@@ -23,12 +23,21 @@ impl RaceTime {
     }
 
     /// Build a race result from hours, minutes, and seconds.
+    ///
+    /// Minutes and seconds must be `< 60`. Use a larger hour value instead of
+    /// overflowing minutes (`1, 30, 0` not `0, 90, 0`).
+    ///
+    /// Returns [`Error::InvalidHms`] when minutes or seconds are ≥ 60, and
+    /// [`Error::NonPositiveTime`] when the total duration is zero.
     pub fn from_hms(
         distance: Distance,
         hours: u64,
         minutes: u64,
         seconds: u64,
     ) -> Result<Self, Error> {
+        if minutes >= 60 || seconds >= 60 {
+            return Err(Error::InvalidHms);
+        }
         Self::new(
             distance,
             Duration::from_secs(hours * 3600 + minutes * 60 + seconds),
@@ -166,6 +175,20 @@ mod tests {
             RaceTime::new(Distance::FiveK, Duration::ZERO),
             Err(Error::NonPositiveTime)
         );
+    }
+
+    #[test]
+    fn from_hms_rejects_overflow_minutes_and_seconds() {
+        assert_eq!(
+            RaceTime::from_hms(Distance::FiveK, 0, 90, 0),
+            Err(Error::InvalidHms)
+        );
+        assert_eq!(
+            RaceTime::from_hms(Distance::FiveK, 0, 0, 60),
+            Err(Error::InvalidHms)
+        );
+        let ninety = RaceTime::from_hms(Distance::HalfMarathon, 1, 30, 0).unwrap();
+        assert_eq!(ninety.seconds(), 5400.0);
     }
 
     #[test]
