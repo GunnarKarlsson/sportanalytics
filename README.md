@@ -86,6 +86,30 @@ cargo run --example age_grade    # 42-year-old 5K
 Age and gender are used only by age grading. Predict first, then pass a predicted
 time into `age_equivalent` if you need an age-adjusted figure.
 
+### Age grading
+
+```rust
+use sportanalytics::running::{
+    age_equivalent, age_grade, Distance, Gender, RaceTime,
+};
+
+fn main() -> Result<(), sportanalytics::Error> {
+    let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0)?;
+    let ag = age_grade(race, 42, Gender::Male, Some(25))?;
+    println!(
+        "{:.1}% {} | open eq {} | table {:?}",
+        ag.percent,
+        ag.level.label(),
+        ag.open_equivalent_hms(),
+        ag.table
+    );
+
+    let as_25 = age_equivalent(race, 42, Gender::Male, 25)?;
+    println!("equivalent at 25: {as_25:.1}s");
+    Ok(())
+}
+```
+
 Named distances are 3K, 5K, 10K, half marathon, and marathon; other lengths use
 `Distance::from_meters` / `Distance::from_km` / `Distance::from_miles` /
 `Distance::custom`, or parse strings such as `"8k"` and `"8mi"`. Training zones
