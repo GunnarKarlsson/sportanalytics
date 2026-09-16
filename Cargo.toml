@@ -12,7 +12,14 @@ homepage = "https://github.com/GunnarKarlsson/sports-analytics"
 documentation = "https://docs.rs/sportanalytics"
 keywords = ["running", "vo2max", "vdot", "age-grade", "race-prediction"]
 categories = ["science"]
-include = ["src/**/*", "Cargo.toml", "LICENSE", "README.md", "CHANGELOG.md"]
+include = [
+    "src/**/*",
+    "examples/**/*",
+    "Cargo.toml",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md",
+]
 
 [package.metadata.docs.rs]
 all-features = true

@@ -23,6 +23,13 @@ use sportanalytics::running::*;
 
 The same items are also available from `sportanalytics::prelude`. The crate root re-exports only `sportanalytics::Error`.
 
+Runnable programs (also listed on docs.rs):
+
+```text
+cargo run --example from_5k      # VDOT, predictions, training zones from a 20:00 5K
+cargo run --example age_grade    # 42-year-old 5K
+```
+
 ## Running
 
 | Function | What it uses |
@@ -45,61 +52,13 @@ Age and gender are used only by age grading. Daniels, Riegel, and Cameron predic
 
 **`Error`** — `NonPositiveTime`, `EmptyRaces`, `InvalidVdot`, `InvalidDistance`, `UnrecognizedDistance`, `InvalidHms`, `UnsolvableTime`. Implements `std::error::Error`.
 
-### VDOT / VO2max
-
-VDOT from one race, or a mean/best over several:
-
-```rust
-use sportanalytics::running::{vo2max_from_races, Distance, RaceTime};
-
-let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-let ten = RaceTime::from_hms(Distance::TenK, 0, 42, 0).unwrap();
-
-let vo2 = vo2max_from_races(&[five, ten]).unwrap();
-println!("VDOT mean {:.1}, best {:.1}", vo2.mean.value(), vo2.best.value());
-```
-
-A 20:00 5K is about VDOT 50. Use `vo2.best` (or `vo2.mean`) when several results disagree.
-
-Predicted finish time at another distance from a known VDOT. Daniels inversion searches **2–12 min/km** and returns `Error::UnsolvableTime` when there is no root in that bracket (it does not clamp):
-
-```rust
-use sportanalytics::running::{time_from_vdot, vdot, Distance, RaceTime};
-
-let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-let hm_secs = time_from_vdot(vdot(five), Distance::HalfMarathon).unwrap();
-```
-
-Advanced helpers: `oxygen_cost(v_m_per_min)`, `percent_vo2max(t_min)`, `velocity_from_vo2(vo2)`.
+A 20:00 5K is about VDOT 50. Daniels inversion searches **2–12 min/km** and returns `Error::UnsolvableTime` when there is no root. See `examples/from_5k.rs` for VDOT, `predict_times`, and `training_zones`.
 
 ### Race prediction
-
-Pick one model, or ask for Daniels and Cameron together. Riegel remains available on the enum.
-
-```rust
-use sportanalytics::running::{
-    predict_daniels_and_cameron, predict_times, Distance, PredictionModel, RaceTime,
-};
-
-let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-
-let pred = predict_times(five, PredictionModel::DanielsVdot).unwrap();
-println!("HM {}  FM {}", pred.formatted(Distance::HalfMarathon).unwrap(), pred.formatted(Distance::Marathon).unwrap());
-
-let both = predict_daniels_and_cameron(five).unwrap();
-println!(
-    "VDOT {:.1}  HM Daniels {}  Cameron {}",
-    both.vdot.value(),
-    both.daniels.formatted(Distance::HalfMarathon).unwrap(),
-    both.cameron.formatted(Distance::HalfMarathon).unwrap(),
-);
-```
 
 - **DanielsVdot** (recommended): invert Daniels–Gilbert so every distance is an equivalent VDOT.
 - **Riegel**: `T2 = T1 * (D2/D1)^1.06` (optional `riegel_with_exponent` if you want another `k`).
 - **Cameron**: `T2 = T1 * (D2/D1) * f(D1)/f(D2)` with Cameron’s `f(x)` in metres.
-
-`PredictedTimes::seconds(distance)` and `formatted` return `Result` (Daniels can be `UnsolvableTime` for a custom distance). Riegel and Cameron still succeed for any positive distances.
 
 ### Training zones
 
@@ -113,44 +72,11 @@ Daniels maps VDOT to paces at fixed %VO2max. Cameron/Riegel times do not define 
 | Interval (I) | 95–100% | 3–5 min VO2 reps |
 | Repetition (R) | ~105–110% | short fast reps |
 
-```rust
-use sportanalytics::running::{format_pace, training_zones, training_zones_from_vdot, Distance, RaceTime};
-
-let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-let z = training_zones(five);
-println!(
-    "E {}–{}  T {}–{}  I {}–{}",
-    format_pace(z.easy.easy_end),
-    format_pace(z.easy.hard_end),
-    format_pace(z.threshold.easy_end),
-    format_pace(z.threshold.hard_end),
-    format_pace(z.interval.easy_end),
-    format_pace(z.interval.hard_end),
-);
-
-// Several races: take the best (or mean) VDOT first.
-// let z = training_zones_from_vdot(vo2.best);
-```
-
 Each `PaceRange` has `easy_end` (slower, sec/km) and `hard_end` (faster, sec/km). Paces are computed from the oxygen-cost equations at the percentages above; this crate does not ship Daniels’ copyrighted lookup tables. Published Daniels *Running Formula* charts will differ by a few seconds/km. A 20:00 5K (VDOT ~50) is about E 4:54–5:53/km, T 4:16–4:28/km, I 3:51–4:01/km.
 
 ### Age grading
 
-```rust
-use sportanalytics::running::{age_grade, Distance, Gender, RaceTime};
-
-let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-let ag = age_grade(five, 42, Gender::Male, Some(25));
-println!(
-    "{:.1}% {} | open eq {} | as 25yo {}",
-    ag.percent,
-    ag.level.label(),
-    ag.open_equivalent_hms(),
-    ag.equivalent_at_age_hms().unwrap()
-);
-```
-
-`age_equivalent(race, age, gender, target_age)` returns only the equivalent finish time in seconds. `Gender` selects WMA male/female table standards, not a general gender model.
+See `examples/age_grade.rs` for a 42-year-old 20:00 5K. `age_equivalent(race, age, gender, target_age)` returns only the equivalent finish time in seconds. `Gender` selects WMA male/female table standards, not a general gender model.
 
 Performance bands: ≥100% world-record level, ≥90% world class, ≥80% national, ≥70% regional, ≥60% local, ≥50% recreational, else developing.
 

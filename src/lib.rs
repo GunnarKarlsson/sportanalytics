@@ -2,7 +2,7 @@
 //!
 //! Crate name: `sportanalytics`. Repository: `sports-analytics`.
 //!
-//! Start with [`running`].
+//! Start with [`running`]. See `examples/from_5k.rs` and `examples/age_grade.rs`.
 //!
 //! Formulas: Daniels & Gilbert (1979) VDOT, Riegel (1977/1981), and Cameron’s
 //! road-race fit. Training paces are inverted from those equations, not copied
