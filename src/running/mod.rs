@@ -52,7 +52,7 @@
 //!
 //! # Age grading
 //!
-//! [`age_grade`], [`age_factor`], [`age_equivalent`], and [`open_standard_secs`]
+//! [`age_grade()`], [`age_factor()`], [`age_equivalent()`], and [`open_standard_secs()`]
 //! return [`Result`](crate::Error). Ages are **5..=99** (`AgeOutOfRange`
 //! otherwise). Road 3K is unsupported (`UnsupportedAgeGradeDistance`). Off-grid
 //! distances interpolate age standards in log-distance between neighbouring

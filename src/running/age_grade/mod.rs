@@ -17,7 +17,7 @@
 //!
 //! Ages must be in **5..=99**. Distances outside the official event span (about
 //! 1 mile through 200 km), and road 3K (no 2025 file), return
-//! [`Error::UnsupportedAgeGradeDistance`](crate::Error::UnsupportedAgeGradeDistance).
+//! [`Error::UnsupportedAgeGradeDistance`].
 //! Off-grid distances interpolate **age standards** in log-distance between the
 //! neighbouring official events (Jones 2025), not factors and not linear metres.
 
