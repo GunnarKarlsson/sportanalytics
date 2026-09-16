@@ -46,7 +46,9 @@
 //!
 //! Paces are inverted from the oxygen-cost equations, not copied from Daniels’
 //! published (copyrighted) charts. Published *Running Formula* charts will
-//! differ by a few seconds/km.
+//! differ by a few seconds/km. Zone edges are [`Pace`] values; default display
+//! is `/km`, or [`TrainingZones::display`] / [`PaceRange::display`] with
+//! [`LengthUnit::Mile`] for `/mi`.
 //!
 //! # Age grading
 //!

@@ -36,7 +36,7 @@ re-exports only `sportanalytics::Error`.
 
 ```rust
 use sportanalytics::running::{
-    format_pace, predict_times, training_zones, vdot, Distance, PredictionModel, RaceTime,
+    predict_times, training_zones, vdot, Distance, LengthUnit, PredictionModel, RaceTime,
 };
 
 fn main() -> Result<(), sportanalytics::Error> {
@@ -51,19 +51,19 @@ fn main() -> Result<(), sportanalytics::Error> {
     );
 
     let z = training_zones(five);
-    println!(
-        "E {}–{}  T {}–{}",
-        format_pace(z.easy.easy_end),
-        format_pace(z.easy.hard_end),
-        format_pace(z.threshold.easy_end),
-        format_pace(z.threshold.hard_end)
-    );
+    println!("E {}  T {}", z.easy, z.threshold);
+    println!("E miles {}", z.easy.display(LengthUnit::Mile));
 
     Ok(())
 }
 ```
 
 A 20:00 5K is about VDOT 50.
+
+Pace and zone `Display` default to **`/km`**. For miles, call
+`.display(LengthUnit::Mile)`. Distances accept kilometres or international miles
+at the I/O edge (`Distance::from_km`, `Distance::from_miles`, or
+`"8mi".parse::<Distance>()`); internal math stays in metres and seconds.
 
 Runnable programs (also listed on docs.rs):
 
@@ -86,9 +86,11 @@ Age and gender are used only by age grading. Predict first, then pass a predicte
 time into `age_equivalent` if you need an age-adjusted figure.
 
 Named distances are 3K, 5K, 10K, half marathon, and marathon; other lengths use
-`Distance::from_meters` / `Distance::custom`. Training zones are inverted from
-the oxygen-cost equations at fixed %VDOT (E 59–74, M 75–84, T 83–88, I 95–100,
-R ~105–110). This crate does not ship Daniels’ copyrighted lookup tables.
+`Distance::from_meters` / `Distance::from_km` / `Distance::from_miles` /
+`Distance::custom`, or parse strings such as `"8k"` and `"8mi"`. Training zones
+are inverted from the oxygen-cost equations at fixed %VDOT (E 59–74, M 75–84,
+T 83–88, I 95–100, R ~105–110). Zone edges are typed `Pace` values. This crate
+does not ship Daniels’ copyrighted lookup tables.
 
 Full types and formulas: [docs.rs/sportanalytics](https://docs.rs/sportanalytics).
 

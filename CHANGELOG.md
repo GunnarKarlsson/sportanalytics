@@ -7,8 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Pace` and `LengthUnit` for kilometre/mile I/O (`METERS_PER_MILE` = 1609.344).
+  Default `Display` is `/km`; use `.display(LengthUnit::Mile)` for `/mi`.
+- `Distance::from_km` / `from_miles` / `kilometers` / `miles`, and `FromStr`
+  suffixes `mi` / `mile` / `miles` (for example `"8mi"`).
+- `RaceTime::from_pace` and `RaceTime::pace`.
+- `Error::InvalidPace` for non-finite or non-positive pace constructors.
+
 ### Changed
 
+- **Breaking:** `PaceRange` edges are `Pace` instead of raw `f64` seconds/km.
+- `format_pace` is deprecated; prefer `Pace` / `Display`.
 - MSRV is 1.71 so CI can resolve current `serde`/`quote`/`serde_json` (they declare rust-version 1.71).
 
 ## [0.1.0] - 2026-09-16
