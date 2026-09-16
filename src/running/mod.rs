@@ -16,15 +16,23 @@
 //! # Types
 //!
 //! - [`Distance`] — `ThreeK`, `FiveK`, `TenK`, `HalfMarathon`, `Marathon`, or
-//!   [`Distance::from_meters`] / [`Distance::custom`]. Half marathon is 21,097.5 m;
-//!   marathon is 42,195 m.
+//!   [`Distance::from_meters`] / [`Distance::from_km`] / [`Distance::from_miles`] /
+//!   [`Distance::custom`]. Half marathon is 21,097.5 m; marathon is 42,195 m.
+//!   Strings such as `"8mi"` parse via [`str::parse`].
 //! - [`RaceTime`] — a distance plus a positive finish time (`from_hms`,
-//!   `from_secs`, or `new`). Minutes and seconds must be `< 60`.
+//!   `from_secs`, `from_pace`, or `new`). Minutes and seconds must be `< 60`.
+//! - [`Pace`] — seconds per metre internally. Default [`std::fmt::Display`] is
+//!   `m:ss /km`; use [`Pace::display`] with [`LengthUnit::Mile`] for `/mi`.
+//! - [`LengthUnit`] — kilometre (default) or international mile
+//!   ([`METERS_PER_MILE`] m) at the I/O edge only.
 //! - [`Vdot`] — newtype around a positive finite Daniels VDOT. Cameron/Riegel
 //!   times are *not* VDOT values.
 //! - [`crate::Error`] — `NonPositiveTime`, `EmptyRaces`, `InvalidVdot`,
 //!   `InvalidDistance`, `UnrecognizedDistance`, `InvalidHms`, `InvalidPace`,
 //!   `UnsolvableTime`.
+//!
+//! Internal math stays in metres and seconds. Kilometre vs mile appears only
+//! when constructing or displaying distances and paces.
 //!
 //! # Training zones
 //!

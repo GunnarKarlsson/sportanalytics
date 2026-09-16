@@ -27,7 +27,7 @@ use super::{RaceTime, Vdot};
 /// A pace band with a slower and a faster edge.
 ///
 /// `easy_end` is the slower edge; `hard_end` is the faster edge.
-/// Default [`Display`] uses `/km`; use [`Self::display`] for `/mi`.
+/// Default [`std::fmt::Display`] uses `/km`; use [`Self::display`] for `/mi`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PaceRange {

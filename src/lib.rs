@@ -51,6 +51,11 @@ pub use error::Error;
 /// Common running types and functions.
 ///
 /// Prefer [`crate::running`] when adding another sport so names stay scoped.
+///
+/// Pace and zone [`std::fmt::Display`] default to `/km`. For miles, call
+/// [`.display(LengthUnit::Mile)`](crate::running::Pace::display) (also on
+/// [`PaceRange`](crate::running::PaceRange) and
+/// [`TrainingZones`](crate::running::TrainingZones)).
 pub mod prelude {
     pub use crate::running::{
         age_equivalent, age_grade, predict_daniels_and_cameron, predict_times, training_zones,

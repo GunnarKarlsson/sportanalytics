@@ -24,7 +24,7 @@ pub enum LengthUnit {
 /// Running pace stored as seconds per metre.
 ///
 /// Construct from km or mile inputs; convert with [`Self::sec_per_km`],
-/// [`Self::sec_per_mile`], or [`Self::seconds`]. Default [`Display`] is
+/// [`Self::sec_per_mile`], or [`Self::seconds`]. Default [`std::fmt::Display`] is
 /// `m:ss /km`; use [`Self::display`] for `/mi`.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Pace {
