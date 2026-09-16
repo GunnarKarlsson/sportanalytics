@@ -1,7 +1,7 @@
 # sportanalytics
 
-[![Crates.io](https://img.shields.io/crates/v/sportanalytics.svg)](https://crates.io/crates/sportanalytics)
-[![Docs.rs](https://docs.rs/sportanalytics/badge.svg)](https://docs.rs/sportanalytics)
+[![MSRV](https://img.shields.io/badge/MSRV-1.71+-blue.svg)](https://blog.rust-lang.org/2023/07/13/Rust-1.71.0/)
+[![Rust](https://img.shields.io/badge/Rust-edition%202021-orange.svg)](https://doc.rust-lang.org/edition-guide/rust-2021/index.html)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/GunnarKarlsson/sports-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/GunnarKarlsson/sports-analytics/actions)
 
