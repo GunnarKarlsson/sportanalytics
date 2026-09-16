@@ -174,10 +174,15 @@ impl PerformanceLevel {
 ///
 /// ```
 /// use sportanalytics::running::{open_standard_secs, Distance, Gender};
+/// use sportanalytics::Error;
 ///
 /// assert_eq!(
 ///     open_standard_secs(Distance::Marathon, Gender::Male).unwrap(),
 ///     7235.0
+/// );
+/// assert_eq!(
+///     open_standard_secs(Distance::ThreeK, Gender::Male),
+///     Err(Error::UnsupportedAgeGradeDistance)
 /// );
 /// ```
 pub fn open_standard_secs(distance: Distance, gender: Gender) -> Result<f64, Error> {
@@ -198,11 +203,19 @@ pub fn open_standard_secs_with(
 /// Age factor in `(0, 1]` for `age`, `gender`, and `distance` from the default
 /// table ([`AgeGradeTable::UsatfMldr2025`]).
 ///
+/// Returns [`Error::AgeOutOfRange`] outside 5..=99, or
+/// [`Error::UnsupportedAgeGradeDistance`] for road 3K / out-of-span distances.
+///
 /// ```
 /// use sportanalytics::running::{age_factor, Distance, Gender};
+/// use sportanalytics::Error;
 ///
 /// let f = age_factor(28, Gender::Male, Distance::FiveK).unwrap();
 /// assert!((f - 1.0).abs() < 1e-9);
+/// assert_eq!(
+///     age_factor(40, Gender::Male, Distance::ThreeK),
+///     Err(Error::UnsupportedAgeGradeDistance)
+/// );
 /// ```
 pub fn age_factor(age: u8, gender: Gender, distance: Distance) -> Result<f64, Error> {
     age_factor_with(age, gender, distance, AgeGradeTable::UsatfMldr2025)
@@ -220,12 +233,23 @@ pub fn age_factor_with(
 
 /// Age-grade a performance with the default USATF MLDR 2025 table.
 ///
+/// Returns [`Result`]. Ages outside 5..=99 yield [`Error::AgeOutOfRange`].
+/// [`Distance::ThreeK`] (and other unsupported distances) yield
+/// [`Error::UnsupportedAgeGradeDistance`].
+///
 /// ```
 /// use sportanalytics::running::{age_grade, Distance, Gender, RaceTime};
+/// use sportanalytics::Error;
 ///
 /// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
 /// let ag = age_grade(five, 42, Gender::Male, Some(25)).unwrap();
 /// assert!((ag.percent - 68.6485).abs() < 0.1);
+///
+/// let three = RaceTime::from_hms(Distance::ThreeK, 0, 12, 0).unwrap();
+/// assert_eq!(
+///     age_grade(three, 40, Gender::Male, None),
+///     Err(Error::UnsupportedAgeGradeDistance)
+/// );
 /// ```
 pub fn age_grade(
     race: RaceTime,
@@ -275,6 +299,8 @@ pub fn age_grade_with(
 }
 
 /// Same performance, expressed as a finish time at age `n`.
+///
+/// Returns [`Result`] with the same age/distance errors as [`age_grade`].
 ///
 /// ```
 /// use sportanalytics::running::{age_equivalent, Distance, Gender, RaceTime};

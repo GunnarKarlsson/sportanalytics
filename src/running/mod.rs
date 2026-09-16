@@ -52,12 +52,14 @@
 //!
 //! # Age grading
 //!
-//! [`age_grade`] looks up the official USATF MLDR 2025 road tables (Alan Jones /
-//! Tom Bernhard, approved 2025-01-10, CC0). Ages are **5..=99**. Road 3K is
-//! unsupported. Off-grid distances interpolate age standards in log-distance
-//! between neighbouring official events. [`Gender`] selects the male/female
-//! table columns. [`PerformanceLevel`] bands are informal community labels, not
-//! official WMA awards.
+//! [`age_grade`], [`age_factor`], [`age_equivalent`], and [`open_standard_secs`]
+//! return [`Result`](crate::Error). Ages are **5..=99** (`AgeOutOfRange`
+//! otherwise). Road 3K is unsupported (`UnsupportedAgeGradeDistance`). Off-grid
+//! distances interpolate age standards in log-distance between neighbouring
+//! official events. [`Gender`] selects the male/female table columns.
+//! [`PerformanceLevel`] bands are informal community labels, not official WMA
+//! awards. Tables are the official USATF MLDR 2025 road tables (Alan Jones /
+//! Tom Bernhard, approved 2025-01-10, CC0).
 //!
 //! # Examples
 //!

@@ -81,10 +81,12 @@ cargo run --example age_grade    # 42-year-old 5K
 | `predict_times` | Daniels invert, Riegel `T2 = T1 * (D2/D1)^1.06`, or Cameron |
 | `predict_daniels_and_cameron` | Daniels and Cameron in one call |
 | `training_zones` / `training_zones_from_vdot` | Daniels %VDOT pace bands (E/M/T/I/R) |
-| `age_grade` / `age_equivalent` | USATF MLDR 2025 single-year road tables (CC0) |
+| `age_grade` / `age_equivalent` | USATF MLDR 2025 single-year road tables (CC0); both return `Result` |
 
 Age and gender are used only by age grading. Predict first, then pass a predicted
-time into `age_equivalent` if you need an age-adjusted figure.
+time into `age_equivalent` if you need an age-adjusted figure. Ages outside
+5..=99 and unsupported distances (including road 3K) error — use `?` or
+`.unwrap()`; do not treat these helpers as infallible.
 
 ### Age grading
 
@@ -132,7 +134,7 @@ Rust **1.71** (edition 2021).
 - Daniels predictions are VDOT-equivalent performances; Riegel is a power law
   (`k = 1.06`); Cameron is a distance-weighted road fit. None include hills,
   heat, or wind.
-- Age grading looks up the official **USATF MLDR 2025** road tables (approved 2025-01-10). Ages **5–99**. Off-grid distances interpolate age standards in log-distance between neighbouring official events (Jones 2025). Road 3K is unsupported. This is not championship software of record, but it uses the same published table as the Howard Grubb MLDR 2025 calculator.
+- Age grading looks up the official **USATF MLDR 2025** road tables (approved 2025-01-10). Ages **5–99** (`AgeOutOfRange` otherwise). Off-grid distances interpolate age standards in log-distance between neighbouring official events (Jones 2025). Road 3K returns `UnsupportedAgeGradeDistance`. This is not championship software of record, but it uses the same published table as the Howard Grubb MLDR 2025 calculator.
 - Predictions assume a flat, all-out effort and similar training specificity.
 - Published Daniels *Running Formula* charts will differ by a few seconds/km from equation output.
 - Default builds have no crate dependencies (`std` only). Enable `serde` for `Serialize`/`Deserialize`.
