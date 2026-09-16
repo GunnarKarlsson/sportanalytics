@@ -19,6 +19,9 @@ use crate::Error;
 ///
 /// Inner arithmetic stays on [`f64`]. Use this wrapper at API edges so a VDOT
 /// is not confused with seconds, metres/min, or a %VO2max fraction.
+///
+/// [`Self::new`] accepts any positive finite value. [`time_from_vdot`] only
+/// solves finish times between 2 and 12 min/km.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Vdot(f64);
 
@@ -136,20 +139,28 @@ pub fn vo2max_from_races(races: &[RaceTime]) -> Result<Vo2Estimate, Error> {
     })
 }
 
+fn implied_vdot(meters: f64, time_secs: f64) -> f64 {
+    let t_min = time_secs / 60.0;
+    oxygen_cost(meters / t_min) / percent_vo2max(t_min)
+}
+
 /// Predicted finish time (seconds) at `distance` for a given VDOT.
 ///
-/// Solves `VDOT * %VO2max(t) = VO2(distance / t)` by bisection.
-pub fn time_from_vdot(vdot: Vdot, distance: Distance) -> f64 {
+/// Solves `VDOT * %VO2max(t) = VO2(distance / t)` by bisection over finish
+/// times from **2 min/km** (elite) to **12 min/km** (very slow). Returns
+/// [`Error::UnsolvableTime`] when no root lies in that bracket — extreme
+/// VDOTs are not clamped to the endpoints.
+pub fn time_from_vdot(vdot: Vdot, distance: Distance) -> Result<f64, Error> {
     let meters = distance.meters();
     let vd = vdot.value();
-    // Bracket: 2 min/km (elite) to 12 min/km (very slow).
     let mut lo = meters / 1000.0 * 2.0 * 60.0;
     let mut hi = meters / 1000.0 * 12.0 * 60.0;
+    if implied_vdot(meters, lo) < vd || implied_vdot(meters, hi) > vd {
+        return Err(Error::UnsolvableTime);
+    }
     for _ in 0..80 {
         let mid = 0.5 * (lo + hi);
-        let t_min = mid / 60.0;
-        let v = meters / t_min;
-        let implied = oxygen_cost(v) / percent_vo2max(t_min);
+        let implied = implied_vdot(meters, mid);
         if implied > vd {
             // too fast for this VDOT → need a slower (larger) time
             lo = mid;
@@ -157,7 +168,7 @@ pub fn time_from_vdot(vdot: Vdot, distance: Distance) -> f64 {
             hi = mid;
         }
     }
-    0.5 * (lo + hi)
+    Ok(0.5 * (lo + hi))
 }
 
 #[cfg(test)]
@@ -215,12 +226,26 @@ mod tests {
     fn time_from_vdot_roundtrips_5k() {
         let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
         let vd = vdot(race);
-        let predicted = time_from_vdot(vd, Distance::FiveK);
+        let predicted = time_from_vdot(vd, Distance::FiveK).unwrap();
         assert!(
             (predicted - race.seconds()).abs() < 0.5,
             "got {predicted}, want {}",
             race.seconds()
         );
+    }
+
+    #[test]
+    fn time_from_vdot_rejects_outside_pace_bracket() {
+        let five = Distance::FiveK;
+        assert_eq!(
+            time_from_vdot(Vdot::new(1.0).unwrap(), five),
+            Err(Error::UnsolvableTime)
+        );
+        assert_eq!(
+            time_from_vdot(Vdot::new(200.0).unwrap(), five),
+            Err(Error::UnsolvableTime)
+        );
+        assert!(time_from_vdot(Vdot::new(50.0).unwrap(), five).is_ok());
     }
 
     #[test]

@@ -10,6 +10,7 @@
 use super::time::format_hms;
 use super::vo2::{time_from_vdot, vdot};
 use super::{Distance, RaceTime, Vdot};
+use crate::Error;
 use std::fmt;
 
 /// Which scaling model to use for [`predict_times`].
@@ -51,24 +52,28 @@ pub struct PredictedTimes {
 
 impl PredictedTimes {
     /// Predicted finish time in seconds for `d`.
-    pub fn seconds(&self, d: Distance) -> f64 {
-        match d {
+    ///
+    /// Named distances use the values computed by [`predict_times`]. Custom
+    /// distances re-run the model; Daniels inversion can return
+    /// [`Error::UnsolvableTime`].
+    pub fn seconds(&self, d: Distance) -> Result<f64, Error> {
+        Ok(match d {
             Distance::ThreeK => self.three_k,
             Distance::FiveK => self.five_k,
             Distance::TenK => self.ten_k,
             Distance::HalfMarathon => self.half_marathon,
             Distance::Marathon => self.marathon,
             Distance::Custom { .. } => match self.model {
-                PredictionModel::DanielsVdot => time_from_vdot(self.vdot, d),
+                PredictionModel::DanielsVdot => time_from_vdot(self.vdot, d)?,
                 PredictionModel::Riegel => riegel(self.source, d),
                 PredictionModel::Cameron => cameron(self.source, d),
             },
-        }
+        })
     }
 
     /// Predicted finish time formatted as `h:mm:ss` or `m:ss`.
-    pub fn formatted(&self, d: Distance) -> String {
-        format_hms(self.seconds(d))
+    pub fn formatted(&self, d: Distance) -> Result<String, Error> {
+        Ok(format_hms(self.seconds(d)?))
     }
 }
 
@@ -79,11 +84,11 @@ impl fmt::Display for PredictedTimes {
             "{:?} VDOT {}  3K {}  5K {}  10K {}  HM {}  FM {}",
             self.model,
             self.vdot,
-            self.formatted(Distance::ThreeK),
-            self.formatted(Distance::FiveK),
-            self.formatted(Distance::TenK),
-            self.formatted(Distance::HalfMarathon),
-            self.formatted(Distance::Marathon)
+            format_hms(self.three_k),
+            format_hms(self.five_k),
+            format_hms(self.ten_k),
+            format_hms(self.half_marathon),
+            format_hms(self.marathon)
         )
     }
 }
@@ -104,32 +109,35 @@ pub struct DualPredictedTimes {
 ///
 /// These models are distance/time only. For an age-adjusted equivalent, take a
 /// predicted time and pass it to [`crate::running::age_equivalent`].
-pub fn predict_times(known: RaceTime, model: PredictionModel) -> PredictedTimes {
+///
+/// [`PredictionModel::DanielsVdot`] returns [`Error::UnsolvableTime`] when any
+/// named distance has no root in the 2–12 min/km inversion bracket.
+pub fn predict_times(known: RaceTime, model: PredictionModel) -> Result<PredictedTimes, Error> {
     let vd = vdot(known);
     let secs = |target: Distance| match model {
         PredictionModel::DanielsVdot => time_from_vdot(vd, target),
-        PredictionModel::Riegel => riegel(known, target),
-        PredictionModel::Cameron => cameron(known, target),
+        PredictionModel::Riegel => Ok(riegel(known, target)),
+        PredictionModel::Cameron => Ok(cameron(known, target)),
     };
-    PredictedTimes {
+    Ok(PredictedTimes {
         model,
         vdot: vd,
         source: known,
-        three_k: secs(Distance::ThreeK),
-        five_k: secs(Distance::FiveK),
-        ten_k: secs(Distance::TenK),
-        half_marathon: secs(Distance::HalfMarathon),
-        marathon: secs(Distance::Marathon),
-    }
+        three_k: secs(Distance::ThreeK)?,
+        five_k: secs(Distance::FiveK)?,
+        ten_k: secs(Distance::TenK)?,
+        half_marathon: secs(Distance::HalfMarathon)?,
+        marathon: secs(Distance::Marathon)?,
+    })
 }
 
 /// Daniels VDOT equivalents and Cameron-scaled times from the same race.
-pub fn predict_daniels_and_cameron(known: RaceTime) -> DualPredictedTimes {
-    DualPredictedTimes {
+pub fn predict_daniels_and_cameron(known: RaceTime) -> Result<DualPredictedTimes, Error> {
+    Ok(DualPredictedTimes {
         vdot: vdot(known),
-        daniels: predict_times(known, PredictionModel::DanielsVdot),
-        cameron: predict_times(known, PredictionModel::Cameron),
-    }
+        daniels: predict_times(known, PredictionModel::DanielsVdot)?,
+        cameron: predict_times(known, PredictionModel::Cameron)?,
+    })
 }
 
 /// Riegel: `T2 = T1 × (D2 / D1)^k` with `k = 1.06`.
@@ -208,18 +216,18 @@ mod tests {
     #[test]
     fn daniels_same_distance_roundtrips() {
         let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-        let pred = predict_times(five, PredictionModel::DanielsVdot);
+        let pred = predict_times(five, PredictionModel::DanielsVdot).unwrap();
         assert_eq!(pred.model, PredictionModel::DanielsVdot);
-        assert!((pred.seconds(Distance::FiveK) - five.seconds()).abs() < 0.5);
-        assert_eq!(pred.formatted(Distance::FiveK), "20:00");
+        assert!((pred.seconds(Distance::FiveK).unwrap() - five.seconds()).abs() < 0.5);
+        assert_eq!(pred.formatted(Distance::FiveK).unwrap(), "20:00");
     }
 
     #[test]
     fn dual_matches_calling_each_model() {
         let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-        let both = predict_daniels_and_cameron(five);
-        let daniels = predict_times(five, PredictionModel::DanielsVdot);
-        let cameron = predict_times(five, PredictionModel::Cameron);
+        let both = predict_daniels_and_cameron(five).unwrap();
+        let daniels = predict_times(five, PredictionModel::DanielsVdot).unwrap();
+        let cameron = predict_times(five, PredictionModel::Cameron).unwrap();
         assert_eq!(both.vdot, daniels.vdot);
         assert_eq!(both.daniels, daniels);
         assert_eq!(both.cameron, cameron);
@@ -229,12 +237,15 @@ mod tests {
     #[test]
     fn riegel_and_daniels_are_distinct_models() {
         let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-        let riegel = predict_times(five, PredictionModel::Riegel);
-        let daniels = predict_times(five, PredictionModel::DanielsVdot);
+        let riegel = predict_times(five, PredictionModel::Riegel).unwrap();
+        let daniels = predict_times(five, PredictionModel::DanielsVdot).unwrap();
         assert_eq!(riegel.model, PredictionModel::Riegel);
         assert_eq!(daniels.model, PredictionModel::DanielsVdot);
         assert!(
-            (riegel.seconds(Distance::Marathon) - daniels.seconds(Distance::Marathon)).abs() > 1.0
+            (riegel.seconds(Distance::Marathon).unwrap()
+                - daniels.seconds(Distance::Marathon).unwrap())
+            .abs()
+                > 1.0
         );
     }
 
@@ -242,16 +253,28 @@ mod tests {
     fn custom_distance_scales_with_riegel() {
         let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
         let eight = Distance::custom(8_000.0, "8K").unwrap();
-        let pred = predict_times(five, PredictionModel::Riegel);
+        let pred = predict_times(five, PredictionModel::Riegel).unwrap();
         let expected = riegel(five, eight);
-        assert!((pred.seconds(eight) - expected).abs() < 1e-9);
+        assert!((pred.seconds(eight).unwrap() - expected).abs() < 1e-9);
         assert_eq!(pred.source, five);
+    }
+
+    #[test]
+    fn daniels_rejects_race_outside_solver_bracket() {
+        let slow = RaceTime::from_hms(Distance::FiveK, 1, 0, 0).unwrap();
+        assert_eq!(
+            predict_times(slow, PredictionModel::DanielsVdot),
+            Err(Error::UnsolvableTime)
+        );
+        assert!(predict_times(slow, PredictionModel::Riegel).is_ok());
     }
 
     #[test]
     fn predicted_times_display_includes_distances() {
         let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-        let s = predict_times(five, PredictionModel::DanielsVdot).to_string();
+        let s = predict_times(five, PredictionModel::DanielsVdot)
+            .unwrap()
+            .to_string();
         assert!(s.contains("5K"));
         assert!(s.contains("HM"));
         assert!(s.contains("VDOT"));
@@ -261,14 +284,14 @@ mod tests {
     #[test]
     fn serde_predicted_times_roundtrip() {
         let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-        let pred = predict_times(five, PredictionModel::DanielsVdot);
+        let pred = predict_times(five, PredictionModel::DanielsVdot).unwrap();
         let back: PredictedTimes =
             serde_json::from_str(&serde_json::to_string(&pred).unwrap()).unwrap();
         assert_eq!(back.model, pred.model);
         assert_eq!(back.source, pred.source);
         assert!((back.vdot.value() - pred.vdot.value()).abs() < 1e-12);
         for d in Distance::all() {
-            assert!((back.seconds(d) - pred.seconds(d)).abs() < 1e-6);
+            assert!((back.seconds(d).unwrap() - pred.seconds(d).unwrap()).abs() < 1e-6);
         }
     }
 }

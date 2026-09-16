@@ -28,8 +28,8 @@
 //! let vo2 = vo2max_from_races(&[five, ten]).unwrap();
 //! assert!(vo2.best.value() > 45.0);
 //!
-//! let both = predict_daniels_and_cameron(five);
-//! let _hm = both.daniels.formatted(Distance::HalfMarathon);
+//! let both = predict_daniels_and_cameron(five).unwrap();
+//! let _hm = both.daniels.formatted(Distance::HalfMarathon).unwrap();
 //!
 //! let zones = training_zones(five);
 //! let _easy = sportanalytics::running::format_pace(zones.easy.hard_end);

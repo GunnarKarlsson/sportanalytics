@@ -26,3 +26,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `predict_times` no longer accepts unused `age` / `gender` arguments. Age adjustment is `age_grade` / `age_equivalent`.
 - Crate root re-exports only `Error`. Running types live under `sportanalytics::running` (or `sportanalytics::prelude`).
 - `RaceTime::from_hms` rejects minutes or seconds ≥ 60 (`InvalidHms`).
+- `time_from_vdot` returns `Result` (`UnsolvableTime`) instead of clamping to the 2–12 min/km bisection bracket. `predict_times` and `predict_daniels_and_cameron` do the same.

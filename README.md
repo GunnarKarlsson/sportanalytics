@@ -43,7 +43,7 @@ Age and gender are used only by age grading. Daniels, Riegel, and Cameron predic
 
 **`Vdot`** — newtype around a positive finite Daniels VDOT. Inner math is still `f64`; the wrapper is used at API edges (`vdot`, `time_from_vdot`, `Vo2Estimate`, `training_zones_from_vdot`) so a VDOT is not confused with seconds or m/min. Cameron/Riegel times are *not* VDOT values.
 
-**`Error`** — `NonPositiveTime`, `EmptyRaces`, `InvalidVdot`, `InvalidDistance`, `UnrecognizedDistance`, `InvalidHms`. Implements `std::error::Error`.
+**`Error`** — `NonPositiveTime`, `EmptyRaces`, `InvalidVdot`, `InvalidDistance`, `UnrecognizedDistance`, `InvalidHms`, `UnsolvableTime`. Implements `std::error::Error`.
 
 ### VDOT / VO2max
 
@@ -61,13 +61,13 @@ println!("VDOT mean {:.1}, best {:.1}", vo2.mean.value(), vo2.best.value());
 
 A 20:00 5K is about VDOT 50. Use `vo2.best` (or `vo2.mean`) when several results disagree.
 
-Predicted finish time at another distance from a known VDOT:
+Predicted finish time at another distance from a known VDOT. Daniels inversion searches **2–12 min/km** and returns `Error::UnsolvableTime` when there is no root in that bracket (it does not clamp):
 
 ```rust
 use sportanalytics::running::{time_from_vdot, vdot, Distance, RaceTime};
 
 let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-let hm_secs = time_from_vdot(vdot(five), Distance::HalfMarathon);
+let hm_secs = time_from_vdot(vdot(five), Distance::HalfMarathon).unwrap();
 ```
 
 Advanced helpers: `oxygen_cost(v_m_per_min)`, `percent_vo2max(t_min)`, `velocity_from_vo2(vo2)`.
@@ -83,15 +83,15 @@ use sportanalytics::running::{
 
 let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
 
-let pred = predict_times(five, PredictionModel::DanielsVdot);
-println!("HM {}  FM {}", pred.formatted(Distance::HalfMarathon), pred.formatted(Distance::Marathon));
+let pred = predict_times(five, PredictionModel::DanielsVdot).unwrap();
+println!("HM {}  FM {}", pred.formatted(Distance::HalfMarathon).unwrap(), pred.formatted(Distance::Marathon).unwrap());
 
-let both = predict_daniels_and_cameron(five);
+let both = predict_daniels_and_cameron(five).unwrap();
 println!(
     "VDOT {:.1}  HM Daniels {}  Cameron {}",
     both.vdot.value(),
-    both.daniels.formatted(Distance::HalfMarathon),
-    both.cameron.formatted(Distance::HalfMarathon),
+    both.daniels.formatted(Distance::HalfMarathon).unwrap(),
+    both.cameron.formatted(Distance::HalfMarathon).unwrap(),
 );
 ```
 
@@ -99,7 +99,7 @@ println!(
 - **Riegel**: `T2 = T1 * (D2/D1)^1.06` (optional `riegel_with_exponent` if you want another `k`).
 - **Cameron**: `T2 = T1 * (D2/D1) * f(D1)/f(D2)` with Cameron’s `f(x)` in metres.
 
-`PredictedTimes::seconds(distance)` returns raw seconds; `formatted` returns `m:ss` or `h:mm:ss`.
+`PredictedTimes::seconds(distance)` and `formatted` return `Result` (Daniels can be `UnsolvableTime` for a custom distance). Riegel and Cameron still succeed for any positive distances.
 
 ### Training zones
 

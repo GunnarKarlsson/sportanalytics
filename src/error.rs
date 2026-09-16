@@ -17,6 +17,8 @@ pub enum Error {
     UnrecognizedDistance,
     /// `from_hms` was given minutes or seconds ≥ 60.
     InvalidHms,
+    /// Daniels inversion found no finish time in the 2–12 min/km pace bracket.
+    UnsolvableTime,
 }
 
 impl fmt::Display for Error {
@@ -30,6 +32,9 @@ impl fmt::Display for Error {
             }
             Self::UnrecognizedDistance => f.write_str("unrecognized distance"),
             Self::InvalidHms => f.write_str("minutes and seconds must be less than 60"),
+            Self::UnsolvableTime => {
+                f.write_str("no finish time in the 2–12 min/km VDOT solver bracket")
+            }
         }
     }
 }
@@ -65,6 +70,10 @@ mod tests {
         assert_eq!(
             Error::InvalidHms.to_string(),
             "minutes and seconds must be less than 60"
+        );
+        assert_eq!(
+            Error::UnsolvableTime.to_string(),
+            "no finish time in the 2–12 min/km VDOT solver bracket"
         );
     }
 
