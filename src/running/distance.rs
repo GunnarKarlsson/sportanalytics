@@ -2,6 +2,7 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 
+use super::units::METERS_PER_MILE;
 use crate::Error;
 
 /// Road / track distance, including a caller-supplied custom length.
@@ -72,6 +73,30 @@ impl Distance {
         Self::custom(meters, "custom")
     }
 
+    /// A custom distance from kilometres.
+    ///
+    /// ```
+    /// use sportanalytics::running::Distance;
+    ///
+    /// let eight = Distance::from_km(8.0).unwrap();
+    /// assert_eq!(eight.meters(), 8_000.0);
+    /// ```
+    pub fn from_km(km: f64) -> Result<Self, Error> {
+        Self::from_meters(km * 1_000.0)
+    }
+
+    /// A custom distance from international miles ([`METERS_PER_MILE`] m each).
+    ///
+    /// ```
+    /// use sportanalytics::running::{Distance, METERS_PER_MILE};
+    ///
+    /// let one = Distance::from_miles(1.0).unwrap();
+    /// assert_eq!(one.meters(), METERS_PER_MILE);
+    /// ```
+    pub fn from_miles(miles: f64) -> Result<Self, Error> {
+        Self::from_meters(miles * METERS_PER_MILE)
+    }
+
     /// A custom distance with a display label such as `"8K"` or `"10 mile"`.
     ///
     /// ```
@@ -98,6 +123,16 @@ impl Distance {
             Self::Marathon => 42_195.0,
             Self::Custom { meters, .. } => meters,
         }
+    }
+
+    /// Distance in kilometres.
+    pub fn kilometers(self) -> f64 {
+        self.meters() / 1_000.0
+    }
+
+    /// Distance in international miles.
+    pub fn miles(self) -> f64 {
+        self.meters() / METERS_PER_MILE
     }
 
     /// Short label used in display output (`3K`, `5K`, `10K`, `HM`, `FM`, or the
@@ -141,13 +176,22 @@ impl FromStr for Distance {
 }
 
 fn parse_length(s: &str) -> Result<Distance, Error> {
+    // Longest mile suffixes first so `miles` / `mile` win over `mi`.
+    if let Some(num) = s
+        .strip_suffix("miles")
+        .or_else(|| s.strip_suffix("mile"))
+        .or_else(|| s.strip_suffix("mi"))
+    {
+        let miles: f64 = num.parse().map_err(|_| Error::UnrecognizedDistance)?;
+        return Distance::from_miles(miles);
+    }
     if let Some(num) = s.strip_suffix('m') {
         let meters: f64 = num.parse().map_err(|_| Error::UnrecognizedDistance)?;
         return Distance::from_meters(meters);
     }
     if let Some(num) = s.strip_suffix('k') {
         let km: f64 = num.parse().map_err(|_| Error::UnrecognizedDistance)?;
-        return Distance::from_meters(km * 1_000.0);
+        return Distance::from_km(km);
     }
     let meters: f64 = s.parse().map_err(|_| Error::UnrecognizedDistance)?;
     Distance::from_meters(meters)
@@ -292,6 +336,38 @@ mod tests {
         let mile = "16093.4m".parse::<Distance>().unwrap();
         assert!((mile.meters() - 16_093.4).abs() < 1e-9);
         assert_eq!("nope".parse::<Distance>(), Err(Error::UnrecognizedDistance));
+    }
+
+    #[test]
+    fn from_km_and_from_miles() {
+        assert_eq!(Distance::from_km(8.0).unwrap().meters(), 8_000.0);
+        assert_eq!(Distance::from_miles(1.0).unwrap().meters(), METERS_PER_MILE);
+        assert_eq!(Distance::from_miles(0.0), Err(Error::InvalidDistance));
+        assert_eq!(Distance::from_km(f64::NAN), Err(Error::InvalidDistance));
+    }
+
+    #[test]
+    fn kilometers_and_miles_accessors() {
+        assert_eq!(Distance::FiveK.kilometers(), 5.0);
+        assert!((Distance::from_miles(8.0).unwrap().miles() - 8.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn from_str_mile_suffixes() {
+        let eight = "8mi".parse::<Distance>().unwrap();
+        assert!((eight.meters() - 8.0 * METERS_PER_MILE).abs() < 1e-9);
+        assert_eq!(
+            "8mile".parse::<Distance>().unwrap().meters(),
+            eight.meters()
+        );
+        assert_eq!(
+            "10miles".parse::<Distance>().unwrap().meters(),
+            Distance::from_miles(10.0).unwrap().meters()
+        );
+        let half = "13.1mi".parse::<Distance>().unwrap();
+        assert!((half.meters() - 13.1 * METERS_PER_MILE).abs() < 1e-9);
+        // Zero length parses as a number but fails the positive-distance check.
+        assert_eq!("0mi".parse::<Distance>(), Err(Error::InvalidDistance));
     }
 
     #[cfg(feature = "serde")]
