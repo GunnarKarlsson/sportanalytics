@@ -94,7 +94,7 @@ Full types and formulas: [docs.rs/sportanalytics](https://docs.rs/sportanalytics
 
 ## MSRV
 
-Rust **1.70** (edition 2021).
+Rust **1.71** (edition 2021).
 
 ## Accuracy / non-goals
 

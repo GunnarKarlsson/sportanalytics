@@ -29,13 +29,13 @@ jobs:
         run: cargo doc --no-deps --all-features --document-private-items
 
   msrv:
-    name: msrv 1.70
+    name: msrv 1.71
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.70.0
+      - uses: dtolnay/rust-toolchain@1.71.0
       - name: Test
-        # Cargo.lock v4 is written by current Cargo; 1.70 cannot parse it.
+        # Cargo.lock v4 is written by current Cargo; 1.71 cannot parse it.
         run: |
           rm -f Cargo.lock
           cargo test --all-targets --all-features

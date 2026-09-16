@@ -2,7 +2,7 @@
 name = "sportanalytics"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.71"
 authors = ["Gunnar Karlsson <gunnar.h.karlsson@gmail.com>"]
 description = "Running analytics in Rust: Daniels VDOT, race-time prediction, training zones, and age grading. Designed so other sports can be added later."
 license = "MIT"
