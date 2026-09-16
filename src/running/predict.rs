@@ -1,11 +1,35 @@
 //! Race-time prediction.
 //!
-//! * [`PredictionModel::DanielsVdot`] — invert Daniels–Gilbert (recommended).
-//! * [`PredictionModel::Riegel`] — `T2 = T1 * (D2/D1)^1.06` (Pete Riegel, 1977/1981).
-//! * [`PredictionModel::Cameron`] — David Cameron road-race fit.
+//! * [`PredictionModel::DanielsVdot`] — invert Daniels–Gilbert VDOT (equivalent
+//!   performances at constant VDOT).
+//! * [`PredictionModel::Riegel`] — power law `T2 = T1 * (D2/D1)^k` with
+//!   [`RIEGEL_EXPONENT`] `k = 1.06` (Pete Riegel, 1977 *Runner’s World* /
+//!   1981 *American Scientist*; `k` is not fitted per athlete).
+//! * [`PredictionModel::Cameron`] — David Cameron’s published road-race fit
+//!   (commonly dated late 1990s):
+//!   `T2 = T1 * (D2/D1) * f(D1)/f(D2)` with
+//!   `f(x) = 13.49681 - 0.000030363 x + 835.7114 / x^0.7905` (`x` in metres).
 //!
-//! Age and gender are not inputs to these models. Age-adjust a predicted time
-//! afterwards with [`crate::running::age_equivalent`].
+//! None of these models account for hills, heat, or wind. Daniels is
+//! VDOT-equivalent; Riegel is a power law; Cameron is distance-weighted.
+//!
+//! Age and gender are not inputs. Age-adjust a predicted time afterwards with
+//! [`crate::running::age_equivalent`].
+//!
+//! ```
+//! use sportanalytics::running::{predict_times, Distance, PredictionModel, RaceTime};
+//!
+//! let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+//! let d = predict_times(five, PredictionModel::DanielsVdot).unwrap();
+//! let c = predict_times(five, PredictionModel::Cameron).unwrap();
+//! let r = predict_times(five, PredictionModel::Riegel).unwrap();
+//! let fm_d = d.seconds(Distance::Marathon).unwrap();
+//! let fm_c = c.seconds(Distance::Marathon).unwrap();
+//! let fm_r = r.seconds(Distance::Marathon).unwrap();
+//! assert!((fm_d - fm_c).abs() > 1.0);
+//! assert!((fm_d - fm_r).abs() > 1.0);
+//! assert!((fm_c - fm_r).abs() > 1.0);
+//! ```
 
 use super::time::format_hms;
 use super::vo2::{time_from_vdot, vdot};
@@ -13,15 +37,21 @@ use super::{Distance, RaceTime, Vdot};
 use crate::Error;
 use std::fmt;
 
+/// Default Riegel fatigue exponent (`k = 1.06`).
+///
+/// Pete Riegel (1977 *Runner’s World*; 1981 *American Scientist*). This crate
+/// does not fit `k` per athlete.
+pub const RIEGEL_EXPONENT: f64 = 1.06;
+
 /// Which scaling model to use for [`predict_times`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PredictionModel {
     /// Invert the Daniels–Gilbert VDOT equations (recommended).
     DanielsVdot,
-    /// Riegel power law with exponent 1.06.
+    /// Riegel power law with exponent [`RIEGEL_EXPONENT`] (`1.06`).
     Riegel,
-    /// Cameron (1996-ish) road-race fit.
+    /// Cameron road-race fit (late-1990s public coefficients).
     Cameron,
 }
 
@@ -29,6 +59,9 @@ pub enum PredictionModel {
 ///
 /// [`Self::seconds`] also works for [`Distance::Custom`] by re-running the same
 /// model from [`Self::source`].
+///
+/// When [`Self::model`] is [`PredictionModel::Riegel`], [`Self::riegel_exponent`]
+/// is [`RIEGEL_EXPONENT`] (`1.06`). Other models leave it as `None`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PredictedTimes {
@@ -38,6 +71,8 @@ pub struct PredictedTimes {
     pub vdot: Vdot,
     /// Race that was scaled.
     pub source: RaceTime,
+    /// Riegel `k` when `model == Riegel` ([`RIEGEL_EXPONENT`]); otherwise `None`.
+    pub riegel_exponent: Option<f64>,
     /// Predicted 3K time in seconds.
     pub three_k: f64,
     /// Predicted 5K time in seconds.
@@ -139,6 +174,10 @@ pub fn predict_times(known: RaceTime, model: PredictionModel) -> Result<Predicte
         model,
         vdot: vd,
         source: known,
+        riegel_exponent: match model {
+            PredictionModel::Riegel => Some(RIEGEL_EXPONENT),
+            _ => None,
+        },
         three_k: secs(Distance::ThreeK)?,
         five_k: secs(Distance::FiveK)?,
         ten_k: secs(Distance::TenK)?,
@@ -164,7 +203,10 @@ pub fn predict_daniels_and_cameron(known: RaceTime) -> Result<DualPredictedTimes
     })
 }
 
-/// Riegel: `T2 = T1 × (D2 / D1)^k` with `k = 1.06`.
+/// Riegel: `T2 = T1 × (D2 / D1)^k` with `k = `[`RIEGEL_EXPONENT`] (`1.06`).
+///
+/// Pete Riegel (1977 *Runner’s World*; 1981 *American Scientist*). The exponent
+/// is a published default, not fitted per athlete.
 ///
 /// ```
 /// use sportanalytics::running::{riegel, Distance, RaceTime};
@@ -174,7 +216,7 @@ pub fn predict_daniels_and_cameron(known: RaceTime) -> Result<DualPredictedTimes
 /// assert!((ten - 3127.0).abs() < 5.0);
 /// ```
 pub fn riegel(known: RaceTime, target: Distance) -> f64 {
-    riegel_with_exponent(known, target, 1.06)
+    riegel_with_exponent(known, target, RIEGEL_EXPONENT)
 }
 
 /// Riegel power law with a caller-supplied exponent.
@@ -191,8 +233,12 @@ pub fn riegel_with_exponent(known: RaceTime, target: Distance, k: f64) -> f64 {
     known.seconds() * ratio.powf(k)
 }
 
-/// Cameron (1996-ish): `T2 = T1 × (D2/D1) × f(D1)/f(D2)`
-/// with `f(x) = 13.49681 − 0.000030363 x + 835.7114 / x^0.7905`, `x` in metres.
+/// Cameron road-race fit: `T2 = T1 × (D2/D1) × f(D1)/f(D2)` with
+/// `f(x) = 13.49681 − 0.000030363 x + 835.7114 / x^0.7905` (`x` in metres).
+///
+/// Coefficients are David Cameron’s published public fit (commonly dated late
+/// 1990s; widely used by running calculators). This is not a journal citation
+/// we can open here.
 ///
 /// ```
 /// use sportanalytics::running::{cameron, Distance, RaceTime};
@@ -213,6 +259,16 @@ fn cameron_f(meters: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn riegel_predicted_times_stores_exponent() {
+        let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let riegel = predict_times(five, PredictionModel::Riegel).unwrap();
+        let daniels = predict_times(five, PredictionModel::DanielsVdot).unwrap();
+        assert_eq!(riegel.riegel_exponent, Some(RIEGEL_EXPONENT));
+        assert_eq!(riegel.riegel_exponent, Some(1.06));
+        assert_eq!(daniels.riegel_exponent, None);
+    }
 
     #[test]
     fn riegel_doubling_adds_fatigue() {

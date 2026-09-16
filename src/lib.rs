@@ -4,13 +4,14 @@
 //!
 //! Start with [`running`]. See `examples/from_5k.rs` and `examples/age_grade.rs`.
 //!
-//! Formulas: Daniels & Gilbert (1979) VDOT, Riegel (1977/1981), and Cameron’s
-//! road-race fit. Training paces are inverted from those equations, not copied
-//! from copyrighted Daniels pace tables. Published *Running Formula* charts
-//! will differ by a few seconds/km. Age grading uses the official USATF MLDR
-//! 2025 road tables (not an approximation).
+//! Formulas: Daniels & Gilbert, *Oxygen Power* (1979) VDOT equations (not
+//! copyrighted printed pace grids), Riegel (1977/1981, `k = 1.06`), and
+//! Cameron’s road-race fit. Training paces are inverted from those equations.
+//! Published *Running Formula* charts will differ by a few seconds/km. Age
+//! grading uses the official USATF MLDR 2025 road tables (not an approximation).
 //!
 //! VDOT is *effective* VO2max (running economy included), not a laboratory test.
+//! A 20:00 5K is about VDOT 49.8; VDOT 50 predicts roughly 19:57 for 5K.
 //!
 //! Enable the `serde` feature to serialize public types. Default builds stay
 //! dependency-free.

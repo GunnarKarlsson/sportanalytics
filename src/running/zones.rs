@@ -3,15 +3,15 @@
 //! Cameron and Riegel times do not define zones. Use the VDOT from a race
 //! (or the mean/best of several races via [`super::vo2max_from_races`]).
 //!
-//! Typical Daniels bands:
+//! Fixed % of VDOT used by this crate (equation inversion, not a pace chart):
 //!
 //! | Zone | % of VDOT | Use |
 //! |------|-----------|-----|
-//! | Easy (E) | 59–74% | easy / long run |
-//! | Marathon (M) | 75–84% | marathon pace |
-//! | Threshold (T) | 83–88% | tempo / cruise intervals |
-//! | Interval (I) | 95–100% | 3–5 min VO2 reps |
-//! | Repetition (R) | ~105–110% | short fast reps |
+//! | Easy (E) | **0.59–0.74** | easy / long run |
+//! | Marathon (M) | **0.75–0.84** | marathon pace |
+//! | Threshold (T) | **0.83–0.88** | tempo / cruise intervals |
+//! | Interval (I) | **0.95–1.00** | 3–5 min VO2 reps |
+//! | Repetition (R) | **1.05–1.10** | short fast reps |
 //!
 //! Target VO2 = `vdot * pct`, then [`super::velocity_from_vo2`].
 //! Paces are computed from those equations, not copied from Daniels’ published
@@ -136,12 +136,17 @@ pub fn training_zones_from_vdot(vdot: Vdot) -> TrainingZones {
 
 /// Training zones from a single race result.
 ///
+/// Edges are equation paces at the fixed %VDOT bands (E 0.59–0.74, …).
+/// A 20:00 5K yields about VDOT 49.8; Easy is `5:53–4:54 /km`.
+///
 /// ```
 /// use sportanalytics::running::{training_zones, Distance, RaceTime};
 ///
 /// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
 /// let z = training_zones(five);
 /// assert_eq!(z.easy.hard_end.to_string(), "4:54 /km");
+/// assert_eq!(z.threshold.hard_end.to_string(), "4:16 /km");
+/// assert_eq!(z.interval.hard_end.to_string(), "3:51 /km");
 /// ```
 pub fn training_zones(race: RaceTime) -> TrainingZones {
     training_zones_from_vdot(vdot(race))
@@ -188,43 +193,81 @@ impl fmt::Display for TrainingZonesDisplay {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::running::Distance;
+    use crate::running::{velocity_from_vo2, Distance};
 
-    fn parse_pace(label: &str) -> f64 {
-        let (m, s) = label.split_once(':').unwrap();
-        m.parse::<f64>().unwrap() * 60.0 + s.parse::<f64>().unwrap()
+    fn pace_from_pct(vdot: f64, pct: f64) -> Pace {
+        let v_m_per_min = velocity_from_vo2(vdot * pct);
+        let sec_per_km = 1000.0 / v_m_per_min * 60.0;
+        Pace::per_km(sec_per_km).unwrap()
     }
 
     #[test]
-    fn twenty_min_5k_matches_published_bands() {
+    fn twenty_min_5k_matches_equation_bands() {
         let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
         let z = training_zones(race);
-        assert!((z.vdot.value() - 49.8).abs() < 0.4);
+        assert!((z.vdot.value() - 49.8).abs() < 0.05);
 
-        // Invert at %VDOT (not a copied pace chart). Easy is a wide 59–74%
-        // band; T/I sit near the usual published ballpark for VDOT ~50.
-        assert_eq!(z.easy.hard_end.to_string(), "4:54 /km");
+        // Equation paces at the frozen %VDOT edges (not a Running Formula cell).
         assert_eq!(z.easy.easy_end.to_string(), "5:53 /km");
-        assert!(
-            (z.threshold.hard_end.sec_per_km() - parse_pace("4:15")).abs() < 5.0,
-            "T hard {}",
-            z.threshold.hard_end.sec_per_km()
-        );
-        assert!(
-            (z.threshold.easy_end.sec_per_km() - parse_pace("4:26")).abs() < 5.0,
-            "T easy {}",
-            z.threshold.easy_end.sec_per_km()
-        );
-        assert!(
-            (z.interval.hard_end.sec_per_km() - parse_pace("3:56")).abs() < 8.0,
-            "I hard {}",
-            z.interval.hard_end.sec_per_km()
-        );
-        assert!(
-            (z.interval.easy_end.sec_per_km() - parse_pace("4:05")).abs() < 8.0,
-            "I easy {}",
-            z.interval.easy_end.sec_per_km()
-        );
+        assert_eq!(z.easy.hard_end.to_string(), "4:54 /km");
+        assert_eq!(z.threshold.easy_end.to_string(), "4:28 /km");
+        assert_eq!(z.threshold.hard_end.to_string(), "4:16 /km");
+        assert_eq!(z.interval.easy_end.to_string(), "4:01 /km");
+        assert_eq!(z.interval.hard_end.to_string(), "3:51 /km");
+    }
+
+    #[test]
+    fn vdot_50_zone_edges_strictly_faster_across_bands() {
+        let z = training_zones_from_vdot(Vdot::new(50.0).unwrap());
+        // Ordered by %VDOT so pace (sec/km) decreases; M/T overlap is intentional.
+        let edges = [
+            z.easy.easy_end.sec_per_km(),       // 0.59
+            z.easy.hard_end.sec_per_km(),       // 0.74
+            z.marathon.easy_end.sec_per_km(),   // 0.75
+            z.threshold.easy_end.sec_per_km(),  // 0.83
+            z.marathon.hard_end.sec_per_km(),   // 0.84
+            z.threshold.hard_end.sec_per_km(),  // 0.88
+            z.interval.easy_end.sec_per_km(),   // 0.95
+            z.interval.hard_end.sec_per_km(),   // 1.00
+            z.repetition.easy_end.sec_per_km(), // 1.05
+            z.repetition.hard_end.sec_per_km(), // 1.10
+        ];
+        for w in edges.windows(2) {
+            assert!(
+                w[0] > w[1],
+                "expected strictly slower→faster: {} then {}",
+                w[0],
+                w[1]
+            );
+        }
+    }
+
+    #[test]
+    fn zone_edges_match_pace_from_pct() {
+        let vd = Vdot::new(50.0).unwrap();
+        let z = training_zones_from_vdot(vd);
+        let v = vd.value();
+        let pairs = [
+            (z.easy.easy_end, 0.59),
+            (z.easy.hard_end, 0.74),
+            (z.marathon.easy_end, 0.75),
+            (z.marathon.hard_end, 0.84),
+            (z.threshold.easy_end, 0.83),
+            (z.threshold.hard_end, 0.88),
+            (z.interval.easy_end, 0.95),
+            (z.interval.hard_end, 1.00),
+            (z.repetition.easy_end, 1.05),
+            (z.repetition.hard_end, 1.10),
+        ];
+        for (edge, pct) in pairs {
+            let expected = pace_from_pct(v, pct);
+            assert!(
+                (edge.sec_per_km() - expected.sec_per_km()).abs() < 1e-9,
+                "pct {pct}: got {} want {}",
+                edge.sec_per_km(),
+                expected.sec_per_km()
+            );
+        }
     }
 
     #[test]

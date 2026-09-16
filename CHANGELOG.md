@@ -15,12 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   suffixes `mi` / `mile` / `miles` (for example `"8mi"`).
 - `RaceTime::from_pace` and `RaceTime::pace`.
 - `Error::InvalidPace` for non-finite or non-positive pace constructors.
+- Checked-in VDOT fixtures (`tests/fixtures/vdot_*.csv`) plus an ignored
+  regenerator; `RIEGEL_EXPONENT` and `PredictedTimes::riegel_exponent`.
 
 ### Changed
 
 - **Breaking:** `PaceRange` edges are `Pace` instead of raw `f64` seconds/km.
 - `format_pace` is deprecated; prefer `Pace` / `Display`.
 - MSRV is 1.71 so CI can resolve current `serde`/`quote`/`serde_json` (they declare rust-version 1.71).
+- VDOT fixtures and tighter solver tests; no coefficient change. Docs clarify
+  20:00 5K ⇒ VDOT ≈ 49.8 (equation implementation, not printed table grids).
 
 ## [0.1.0] - 2026-09-16
 

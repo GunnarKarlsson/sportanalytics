@@ -38,11 +38,11 @@
 //!
 //! | Zone | % of VDOT | Use |
 //! |------|-----------|-----|
-//! | Easy (E) | 59–74% | easy / long run |
-//! | Marathon (M) | 75–84% | marathon pace |
-//! | Threshold (T) | 83–88% | tempo / cruise intervals |
-//! | Interval (I) | 95–100% | 3–5 min VO2 reps |
-//! | Repetition (R) | ~105–110% | short fast reps |
+//! | Easy (E) | 0.59–0.74 | easy / long run |
+//! | Marathon (M) | 0.75–0.84 | marathon pace |
+//! | Threshold (T) | 0.83–0.88 | tempo / cruise intervals |
+//! | Interval (I) | 0.95–1.00 | 3–5 min VO2 reps |
+//! | Repetition (R) | 1.05–1.10 | short fast reps |
 //!
 //! Paces are inverted from the oxygen-cost equations, not copied from Daniels’
 //! published (copyrighted) charts. Published *Running Formula* charts will
@@ -80,7 +80,7 @@ pub use age_grade::{
 pub use distance::Distance;
 pub use predict::{
     cameron, predict_daniels_and_cameron, predict_times, riegel, riegel_with_exponent,
-    DualPredictedTimes, PredictedTimes, PredictionModel,
+    DualPredictedTimes, PredictedTimes, PredictionModel, RIEGEL_EXPONENT,
 };
 pub use time::RaceTime;
 pub use units::{LengthUnit, Pace, PaceDisplay, METERS_PER_MILE};
