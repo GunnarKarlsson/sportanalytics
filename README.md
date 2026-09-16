@@ -56,12 +56,11 @@ fn main() -> Result<(), sportanalytics::Error> {
     println!("E {}  T {}", z.easy, z.threshold);
     println!("E miles {}", z.easy.display(LengthUnit::Mile));
 
+    // A 20:00 5K is VDOT ≈ 49.8; VDOT 50 predicts about 19:57 for 5K
+    // (equation output; printed Running Formula grids may differ by a few seconds).
     Ok(())
 }
 ```
-
-A **20:00 5K** is VDOT **≈ 49.8**; **VDOT 50** predicts about **19:57** for 5K
-(equation output; printed *Running Formula* grids may differ by a few seconds).
 
 Pace and zone `Display` default to **`/km`**. For miles, call
 `.display(LengthUnit::Mile)`. Distances accept kilometres or international miles
