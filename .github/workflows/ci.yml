@@ -19,6 +19,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
       - name: Format
         run: cargo fmt --all -- --check
       - name: Clippy
@@ -27,6 +28,10 @@ jobs:
         run: cargo test --all-targets --all-features
       - name: Docs
         run: cargo doc --no-deps --all-features --document-private-items
+      - name: Package
+        run: |
+          cargo package --list
+          cargo publish --dry-run
 
   msrv:
     name: msrv 1.71
@@ -34,6 +39,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.71.0
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: msrv-1.71
       - name: Test
         # Cargo.lock v4 is written by current Cargo; 1.71 cannot parse it.
         run: |
