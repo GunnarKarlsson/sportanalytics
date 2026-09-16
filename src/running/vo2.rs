@@ -116,22 +116,15 @@ pub fn vdot(race: RaceTime) -> Vdot {
 
 /// Combine one or more race times into a VO2max / VDOT estimate.
 pub fn vo2max_from_races(races: &[RaceTime]) -> Result<Vo2Estimate, Error> {
-    if races.is_empty() {
-        return Err(Error::EmptyRaces);
-    }
     let per_race: Vec<(Distance, Vdot)> = races.iter().map(|r| (r.distance(), vdot(*r))).collect();
-    let sum: f64 = per_race.iter().map(|(_, v)| v.value()).sum();
-    let mean = Vdot::from_raw(sum / per_race.len() as f64);
     let best = per_race
         .iter()
         .map(|(_, v)| *v)
-        .fold(Vdot::from_raw(f64::NEG_INFINITY), |a, b| {
-            if b.value() > a.value() {
-                b
-            } else {
-                a
-            }
-        });
+        .max_by(|a, b| a.value().total_cmp(&b.value()))
+        .ok_or(Error::EmptyRaces)?;
+    let mean = Vdot::from_raw(
+        per_race.iter().map(|(_, v)| v.value()).sum::<f64>() / per_race.len() as f64,
+    );
     Ok(Vo2Estimate {
         per_race,
         mean,
