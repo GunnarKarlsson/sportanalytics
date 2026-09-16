@@ -62,10 +62,11 @@ fn main() -> Result<(), sportanalytics::Error> {
 }
 ```
 
-Pace and zone `Display` default to **`/km`**. For miles, call
-`.display(LengthUnit::Mile)`. Distances accept kilometres or international miles
-at the I/O edge (`Distance::from_km`, `Distance::from_miles`, or
-`"8mi".parse::<Distance>()`); internal math stays in metres and seconds.
+- Pace and zone `Display` default to **`/km`**. For miles, call
+  `.display(LengthUnit::Mile)`.
+- Distances accept kilometres or international miles at the I/O edge
+  (`Distance::from_km`, `Distance::from_miles`, or `"8mi".parse::<Distance>()`);
+  internal math stays in metres and seconds.
 
 Runnable programs (also listed on docs.rs):
 
@@ -113,12 +114,13 @@ fn main() -> Result<(), sportanalytics::Error> {
 }
 ```
 
-Named distances are 3K, 5K, 10K, half marathon, and marathon; other lengths use
-`Distance::from_meters` / `Distance::from_km` / `Distance::from_miles` /
-`Distance::custom`, or parse strings such as `"8k"` and `"8mi"`. Training zones
-are inverted from the oxygen-cost equations at fixed %VDOT (E 0.59–0.74, M 0.75–0.84,
-T 0.83–0.88, I 0.95–1.00, R 1.05–1.10). Zone edges are typed `Pace` values. This crate
-does not ship Daniels’ copyrighted lookup tables.
+- Named distances are 3K, 5K, 10K, half marathon, and marathon; other lengths use
+  `Distance::from_meters` / `Distance::from_km` / `Distance::from_miles` /
+  `Distance::custom`, or parse strings such as `"8k"` and `"8mi"`.
+- Training zones are inverted from the oxygen-cost equations at fixed %VDOT
+  (E 0.59–0.74, M 0.75–0.84, T 0.83–0.88, I 0.95–1.00, R 1.05–1.10).
+- Zone edges are typed `Pace` values.
+- This crate does not ship Daniels’ copyrighted lookup tables.
 
 Full types and formulas: [docs.rs/sportanalytics](https://docs.rs/sportanalytics).
 
