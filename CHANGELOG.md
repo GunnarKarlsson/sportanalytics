@@ -17,3 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compact WMA-style age-grade approximation with open-equivalent and age-equivalent times.
 - Typed public surface: `Distance`, `RaceTime`, `Vdot`, `Error`.
 - Zero runtime dependencies (`std` only).
+
+### Changed
+
+- `predict_times` no longer accepts unused `age` / `gender` arguments. Age adjustment is `age_grade` / `age_equivalent`.

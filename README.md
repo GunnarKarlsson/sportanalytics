@@ -31,7 +31,7 @@ The same types are re-exported from the crate root (`sportanalytics::Distance`, 
 | `training_zones` / `training_zones_from_vdot` | Daniels %VDOT pace bands (E/M/T/I/R) |
 | `age_grade` / `age_equivalent` | Compact WMA-style age factors + open standards |
 
-Age and gender are required for age grading. Daniels, Riegel, and Cameron predictions do not use them; you can still pass them into `predict_times` and then run `age_equivalent` on a predicted time.
+Age and gender are used only by age grading. Daniels, Riegel, and Cameron predictions do not take them. Predict first, then pass a predicted time into `age_equivalent` if you need an age-adjusted figure.
 
 ### Types
 
@@ -76,12 +76,12 @@ Pick one model, or ask for Daniels and Cameron together. Riegel remains availabl
 
 ```rust
 use sportanalytics::running::{
-    predict_daniels_and_cameron, predict_times, Distance, Gender, PredictionModel, RaceTime,
+    predict_daniels_and_cameron, predict_times, Distance, PredictionModel, RaceTime,
 };
 
 let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
 
-let pred = predict_times(five, PredictionModel::DanielsVdot, Some(42), Some(Gender::Male));
+let pred = predict_times(five, PredictionModel::DanielsVdot);
 println!("HM {}  FM {}", pred.formatted(Distance::HalfMarathon), pred.formatted(Distance::Marathon));
 
 let both = predict_daniels_and_cameron(five);

@@ -4,12 +4,12 @@
 //! * [`PredictionModel::Riegel`] — `T2 = T1 * (D2/D1)^1.06` (Pete Riegel, 1977/1981).
 //! * [`PredictionModel::Cameron`] — David Cameron road-race fit.
 //!
-//! Age and gender are not used by these models. Pass them only if you later
-//! age-adjust a predicted time with [`crate::running::age_equivalent`].
+//! Age and gender are not inputs to these models. Age-adjust a predicted time
+//! afterwards with [`crate::running::age_equivalent`].
 
 use super::time::format_hms;
 use super::vo2::{time_from_vdot, vdot};
-use super::{Distance, Gender, RaceTime, Vdot};
+use super::{Distance, RaceTime, Vdot};
 
 /// Which scaling model to use for [`predict_times`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -72,14 +72,9 @@ pub struct DualPredictedTimes {
 
 /// Predict 3K / 5K / 10K / HM / FM from a single known race.
 ///
-/// `age` and `gender` are unused by Daniels, Riegel, and Cameron. They are
-/// accepted so callers can pass athlete metadata without a separate code path.
-pub fn predict_times(
-    known: RaceTime,
-    model: PredictionModel,
-    _age: Option<u8>,
-    _gender: Option<Gender>,
-) -> PredictedTimes {
+/// These models are distance/time only. For an age-adjusted equivalent, take a
+/// predicted time and pass it to [`crate::running::age_equivalent`].
+pub fn predict_times(known: RaceTime, model: PredictionModel) -> PredictedTimes {
     let vd = vdot(known);
     let secs = |target: Distance| match model {
         PredictionModel::DanielsVdot => time_from_vdot(vd, target),
@@ -101,8 +96,8 @@ pub fn predict_times(
 pub fn predict_daniels_and_cameron(known: RaceTime) -> DualPredictedTimes {
     DualPredictedTimes {
         vdot: vdot(known),
-        daniels: predict_times(known, PredictionModel::DanielsVdot, None, None),
-        cameron: predict_times(known, PredictionModel::Cameron, None, None),
+        daniels: predict_times(known, PredictionModel::DanielsVdot),
+        cameron: predict_times(known, PredictionModel::Cameron),
     }
 }
 
@@ -182,7 +177,7 @@ mod tests {
     #[test]
     fn daniels_same_distance_roundtrips() {
         let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-        let pred = predict_times(five, PredictionModel::DanielsVdot, None, None);
+        let pred = predict_times(five, PredictionModel::DanielsVdot);
         assert_eq!(pred.model, PredictionModel::DanielsVdot);
         assert!((pred.seconds(Distance::FiveK) - five.seconds()).abs() < 0.5);
         assert_eq!(pred.formatted(Distance::FiveK), "20:00");
@@ -192,8 +187,8 @@ mod tests {
     fn dual_matches_calling_each_model() {
         let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
         let both = predict_daniels_and_cameron(five);
-        let daniels = predict_times(five, PredictionModel::DanielsVdot, None, None);
-        let cameron = predict_times(five, PredictionModel::Cameron, None, None);
+        let daniels = predict_times(five, PredictionModel::DanielsVdot);
+        let cameron = predict_times(five, PredictionModel::Cameron);
         assert_eq!(both.vdot, daniels.vdot);
         assert_eq!(both.daniels, daniels);
         assert_eq!(both.cameron, cameron);
@@ -201,15 +196,14 @@ mod tests {
     }
 
     #[test]
-    fn unused_age_gender_do_not_change_prediction() {
+    fn riegel_and_daniels_are_distinct_models() {
         let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-        let a = predict_times(five, PredictionModel::Riegel, None, None);
-        let b = predict_times(
-            five,
-            PredictionModel::Riegel,
-            Some(42),
-            Some(Gender::Female),
+        let riegel = predict_times(five, PredictionModel::Riegel);
+        let daniels = predict_times(five, PredictionModel::DanielsVdot);
+        assert_eq!(riegel.model, PredictionModel::Riegel);
+        assert_eq!(daniels.model, PredictionModel::DanielsVdot);
+        assert!(
+            (riegel.seconds(Distance::Marathon) - daniels.seconds(Distance::Marathon)).abs() > 1.0
         );
-        assert_eq!(a, b);
     }
 }
