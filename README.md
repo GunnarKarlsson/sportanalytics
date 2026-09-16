@@ -86,9 +86,10 @@ cargo run --example age_grade    # 42-year-old 5K
 | `age_grade` / `age_equivalent` | USATF MLDR 2025 single-year road tables (CC0); both return `Result` |
 
 Age and gender are used only by age grading. Predict first, then pass a predicted
-time into `age_equivalent` if you need an age-adjusted figure. Ages outside
-5..=99 and unsupported distances (including road 3K) error — use `?` or
-`.unwrap()`; do not treat these helpers as infallible.
+time into `age_equivalent` if you need an age-adjusted figure. 
+
+Ages outside 5..=99 and unsupported distances (including road 3K) error — use `?` or
+`.unwrap()`.
 
 ### Age grading
 
@@ -132,26 +133,45 @@ Rust **1.71** (edition 2021).
 
 - VDOT is *effective* VO2max (economy included), not a lab test. This crate
   implements the Daniels–Gilbert *Oxygen Power* (1979) equations, not the
-  copyrighted printed lookup tables. Spoken landmark: **20:00 5K ⇒ VDOT ≈ 49.8**;
-  **VDOT 50 ⇒ ~19:57** 5K.
+  copyrighted printed lookup tables.
 - Daniels predictions are VDOT-equivalent performances; Riegel is a power law
   (`k = 1.06`); Cameron is a distance-weighted road fit. None include hills,
   heat, or wind.
-- Age grading looks up the official **USATF MLDR 2025** road tables (approved 2025-01-10). Ages **5–99** (`AgeOutOfRange` otherwise). Off-grid distances interpolate age standards in log-distance between neighbouring official events (Jones 2025). Road 3K returns `UnsupportedAgeGradeDistance`. This is not championship software of record, but it uses the same published table as the Howard Grubb MLDR 2025 calculator.
+- Age grading looks up the official **USATF MLDR 2025** road tables
+  (approved 2025-01-10). Ages **5–99** (`AgeOutOfRange` otherwise). Off-grid
+  distances interpolate age standards in log-distance between neighbouring
+  official events (Jones 2025). Road 3K returns `UnsupportedAgeGradeDistance`.
+  This crate uses the same published table as the Howard Grubb MLDR 2025
+  calculator.
 - Predictions assume a flat, all-out effort and similar training specificity.
-- Published Daniels *Running Formula* charts will differ by a few seconds/km from equation output.
-- Default builds have no crate dependencies (`std` only). Enable `serde` for `Serialize`/`Deserialize`.
-- 0.1 does not include cycling, swimming, or other sports. Add those as sibling modules later; do not dump new sports onto the crate root.
+- Published Daniels *Running Formula* charts will differ by a few seconds/km
+  from equation output.
+- Default builds have no crate dependencies (`std` only). Enable `serde` for
+  `Serialize`/`Deserialize`.
+- Crate 0.1.0 does not include cycling, swimming, or other sports. Add those as
+  sibling modules later; do not dump new sports onto the crate root.
 
 ## Attribution
 
 The running module implements published equations. It is not copied from another
 crate or from copyrighted pace tables.
 
-- **VDOT / equivalents / training intensities:** Jack Daniels and Jimmy Gilbert, *Oxygen Power* (1979) — oxygen cost of running and sustainable %VO2max versus duration. This crate implements those equations (not copyrighted printed pace grids). Training zones invert the oxygen-cost curve at fixed % of VDOT (E 0.59–0.74, M 0.75–0.84, T 0.83–0.88, I 0.95–1.00, R 1.05–1.10).
-- **Riegel:** Pete Riegel (1977, *Runner’s World*; 1981, *American Scientist*) — `T2 = T1 * (D2/D1)^1.06`. The exponent `1.06` is the published default; it is not fitted per athlete.
-- **Cameron:** David Cameron’s published road-race fit (commonly dated late 1990s; public calculator coefficients) — `T2 = T1 * (D2/D1) * f(D1)/f(D2)` with `f(x) = 13.49681 - 0.000030363 x + 835.7114 / x^0.7905` (`x` in metres).
-- **Age grading:** USATF Masters Long Distance Running (MLDR) 2025 road tables by Alan Jones and Tom Bernhard (approved 2025-01-10). Source: [AlanLyttonJones/Age-Grade-Tables](https://github.com/AlanLyttonJones/Age-Grade-Tables) (`2025 Files/AgeGrade.zip`). Table data is **CC0-1.0**; the crate code is MIT.
+- **VDOT / equivalents / training intensities:** Jack Daniels and Jimmy Gilbert,
+  *Oxygen Power* (1979) — oxygen cost of running and sustainable %VO2max versus
+  duration. This crate implements those equations (not copyrighted printed pace
+  grids). Training zones invert the oxygen-cost curve at fixed % of VDOT
+  (E 0.59–0.74, M 0.75–0.84, T 0.83–0.88, I 0.95–1.00, R 1.05–1.10).
+- **Riegel:** Pete Riegel (1977, *Runner’s World*; 1981, *American Scientist*) —
+  `T2 = T1 * (D2/D1)^1.06`. The exponent `1.06` is the published default; it is
+  not fitted per athlete.
+- **Cameron:** David Cameron’s published road-race fit (commonly dated late
+  1990s; public calculator coefficients) —
+  `T2 = T1 * (D2/D1) * f(D1)/f(D2)` with
+  `f(x) = 13.49681 - 0.000030363 x + 835.7114 / x^0.7905` (`x` in metres).
+- **Age grading:** USATF Masters Long Distance Running (MLDR) 2025 road tables
+  by Alan Jones and Tom Bernhard (approved 2025-01-10). Source:
+  [AlanLyttonJones/Age-Grade-Tables](https://github.com/AlanLyttonJones/Age-Grade-Tables)
+  (`2025 Files/AgeGrade.zip`). Table data is **CC0-1.0**; the crate code is MIT.
 
 ## Contributing
 
