@@ -15,7 +15,8 @@
 //!
 //! Target VO2 = `vdot * pct`, then [`super::velocity_from_vo2`].
 //! Paces are computed from those equations, not copied from Daniels’ published
-//! (copyrighted) pace tables.
+//! (copyrighted) pace tables. Published Daniels *Running Formula* charts will
+//! differ by a few seconds/km.
 
 use std::fmt;
 

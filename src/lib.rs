@@ -6,7 +6,8 @@
 //!
 //! Formulas: Daniels & Gilbert (1979) VDOT, Riegel (1977/1981), and Cameron’s
 //! road-race fit. Training paces are inverted from those equations, not copied
-//! from copyrighted Daniels pace tables. Age factors are a WMA-style
+//! from copyrighted Daniels pace tables. Published *Running Formula* charts
+//! will differ by a few seconds/km. Age factors are a WMA-style
 //! *approximation*, not official scoring tables.
 //!
 //! VDOT is *effective* VO2max (running economy included), not a laboratory test.

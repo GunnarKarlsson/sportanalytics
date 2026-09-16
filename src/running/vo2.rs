@@ -169,17 +169,25 @@ mod tests {
     use super::*;
 
     #[test]
-    fn five_k_20_min_is_about_vdot_50() {
-        let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-        let v = vdot(race).value();
-        assert!((v - 49.8).abs() < 0.4, "got {v}");
-    }
-
-    #[test]
-    fn ten_k_45_min_is_about_vdot_45() {
-        let race = RaceTime::from_hms(Distance::TenK, 0, 45, 0).unwrap();
-        let v = vdot(race).value();
-        assert!((v - 45.3).abs() < 0.4, "got {v}");
+    fn vdot_matches_published_table_ballparks() {
+        // Printed Daniels VDOT 50 row (Oxygen Power / Running Formula), plus
+        // the well-known 45:00 10K ≈ 45. Crate uses the 1979 equations, so
+        // whole-VDOT printed rows can differ by a few tenths.
+        let cases = [
+            (Distance::FiveK, 0, 20, 0, 50.0),
+            (Distance::TenK, 0, 41, 21, 50.0),
+            (Distance::HalfMarathon, 1, 31, 35, 50.0),
+            (Distance::Marathon, 3, 10, 49, 50.0),
+            (Distance::TenK, 0, 45, 0, 45.0),
+        ];
+        for (distance, h, m, s, published) in cases {
+            let race = RaceTime::from_hms(distance, h, m, s).unwrap();
+            let v = vdot(race).value();
+            assert!(
+                (v - published).abs() < 0.4,
+                "{distance:?} {h}:{m:02}:{s:02} got {v}, want ~{published}"
+            );
+        }
     }
 
     #[test]

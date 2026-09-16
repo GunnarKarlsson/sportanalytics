@@ -132,7 +132,7 @@ println!(
 // let z = training_zones_from_vdot(vo2.best);
 ```
 
-Each `PaceRange` has `easy_end` (slower, sec/km) and `hard_end` (faster, sec/km). Paces are computed from the oxygen-cost equations at the percentages above; this crate does not ship Daniels’ copyrighted lookup tables. A 20:00 5K (VDOT ~50) is about E 4:54–5:53/km, T 4:16–4:28/km, I 3:51–4:01/km.
+Each `PaceRange` has `easy_end` (slower, sec/km) and `hard_end` (faster, sec/km). Paces are computed from the oxygen-cost equations at the percentages above; this crate does not ship Daniels’ copyrighted lookup tables. Published Daniels *Running Formula* charts will differ by a few seconds/km. A 20:00 5K (VDOT ~50) is about E 4:54–5:53/km, T 4:16–4:28/km, I 3:51–4:01/km.
 
 ### Age grading
 
@@ -168,7 +168,7 @@ Performance bands: ≥100% world-record level, ≥90% world class, ≥80% nation
 
 The running module implements published equations. It is not copied from another crate or from copyrighted pace tables.
 
-- **VDOT / equivalents / training intensities:** Jack Daniels and Jimmy Gilbert, *Oxygen Power* (1979) — oxygen cost of running and sustainable %VO2max versus duration. Training zones here invert those equations at fixed % of VDOT; they are not a transcription of Daniels’ published pace charts.
+- **VDOT / equivalents / training intensities:** Jack Daniels and Jimmy Gilbert, *Oxygen Power* (1979) — oxygen cost of running and sustainable %VO2max versus duration. Training zones here invert those equations at fixed % of VDOT; they are not a transcription of Daniels’ published pace charts. Published *Running Formula* charts will differ by a few seconds/km.
 - **Riegel:** Pete Riegel (1977, *Runner’s World*; 1981, *American Scientist*) — `T2 = T1 * (D2/D1)^1.06`.
 - **Cameron:** David Cameron’s road-race fit — `T2 = T1 * (D2/D1) * f(D1)/f(D2)`.
 - **Age grading:** compact interpolated age factors in the spirit of WMA/USATF road tables. Open 5K–marathon times are 2025-era World Athletics road world records (USATF MLDR 2025 open standards compiled by Alan Jones), not a copy of the official lookup grid. Percentages are estimates, not championship scores.
