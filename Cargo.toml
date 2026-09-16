@@ -3,12 +3,19 @@ name = "sportanalytics"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.70"
+authors = ["Gunnar Karlsson <gunnar.h.karlsson@gmail.com>"]
 description = "Analytics helpers for sports. First sport: running (VDOT/VO2max, age grade, race predictions)."
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/GunnarKarlsson/sports-analytics"
+homepage = "https://github.com/GunnarKarlsson/sports-analytics"
 keywords = ["running", "vo2max", "vdot", "age-grade", "race-prediction"]
 categories = ["science"]
-exclude = ["PROJECT.md", "TODO.md", "TODO2.md", "TODO3.md", "TODO4.md", "TODO5.md"]
+include = ["src/**/*", "Cargo.toml", "LICENSE", "README.md"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--generate-link-to-definition"]
 
 [dependencies]
 

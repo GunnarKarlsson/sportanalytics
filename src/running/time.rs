@@ -105,6 +105,7 @@ mod tests {
         let b = RaceTime::from_secs(Distance::FiveK, 1200.0).unwrap();
         assert_eq!(a.seconds(), b.seconds());
         assert_eq!(a.distance(), Distance::FiveK);
+        assert_eq!(a.time(), Duration::from_secs(1200));
         assert_eq!(a.minutes(), 20.0);
     }
 

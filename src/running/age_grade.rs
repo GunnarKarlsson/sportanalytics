@@ -301,7 +301,13 @@ mod tests {
             PerformanceLevel::from_percent(49.9),
             PerformanceLevel::Developing
         );
+        assert_eq!(PerformanceLevel::WorldRecord.label(), "world-record level");
         assert_eq!(PerformanceLevel::WorldClass.label(), "world class");
+        assert_eq!(PerformanceLevel::NationalClass.label(), "national class");
+        assert_eq!(PerformanceLevel::RegionalClass.label(), "regional class");
+        assert_eq!(PerformanceLevel::LocalClass.label(), "local class");
+        assert_eq!(PerformanceLevel::Recreational.label(), "recreational");
+        assert_eq!(PerformanceLevel::Developing.label(), "developing");
     }
 
     #[test]

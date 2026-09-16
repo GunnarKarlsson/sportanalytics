@@ -149,6 +149,28 @@ mod tests {
     }
 
     #[test]
+    fn riegel_exponent_one_scales_linearly() {
+        let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let ten = riegel_with_exponent(five, Distance::TenK, 1.0);
+        assert!((ten - 2400.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn cameron_same_distance_is_identity() {
+        let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let back = cameron(five, Distance::FiveK);
+        assert!((back - five.seconds()).abs() < 1e-9);
+    }
+
+    #[test]
+    fn cameron_5k_20_min_to_10k() {
+        let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let ten = cameron(five, Distance::TenK);
+        // 1200 × 2 × f(5000)/f(10000) with Cameron's f(x)
+        assert!((ten - 2499.661372648436).abs() < 1e-9, "got {ten}");
+    }
+
+    #[test]
     fn cameron_longer_distance_is_slower() {
         let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
         let ten = cameron(five, Distance::TenK);
