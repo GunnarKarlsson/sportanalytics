@@ -23,7 +23,8 @@
 //! - [`Vdot`] — newtype around a positive finite Daniels VDOT. Cameron/Riegel
 //!   times are *not* VDOT values.
 //! - [`crate::Error`] — `NonPositiveTime`, `EmptyRaces`, `InvalidVdot`,
-//!   `InvalidDistance`, `UnrecognizedDistance`, `InvalidHms`, `UnsolvableTime`.
+//!   `InvalidDistance`, `UnrecognizedDistance`, `InvalidHms`, `InvalidPace`,
+//!   `UnsolvableTime`.
 //!
 //! # Training zones
 //!
@@ -58,6 +59,7 @@ mod age_grade;
 mod distance;
 mod predict;
 mod time;
+mod units;
 mod vo2;
 mod zones;
 
@@ -71,6 +73,7 @@ pub use predict::{
     DualPredictedTimes, PredictedTimes, PredictionModel,
 };
 pub use time::RaceTime;
+pub use units::{LengthUnit, Pace, PaceDisplay, METERS_PER_MILE};
 pub use vo2::{
     oxygen_cost, percent_vo2max, time_from_vdot, vdot, velocity_from_vo2, vo2max_from_races, Vdot,
     Vo2Estimate,

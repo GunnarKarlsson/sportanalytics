@@ -55,8 +55,8 @@ pub mod prelude {
     pub use crate::running::{
         age_equivalent, age_grade, predict_daniels_and_cameron, predict_times, training_zones,
         training_zones_from_vdot, vdot, vo2max_from_races, AgeGradeResult, Distance,
-        DualPredictedTimes, Gender, PaceRange, PerformanceLevel, PredictedTimes, PredictionModel,
-        RaceTime, TrainingZones, Vdot, Vo2Estimate,
+        DualPredictedTimes, Gender, LengthUnit, Pace, PaceRange, PerformanceLevel, PredictedTimes,
+        PredictionModel, RaceTime, TrainingZones, Vdot, Vo2Estimate, METERS_PER_MILE,
     };
     pub use crate::Error;
 }
