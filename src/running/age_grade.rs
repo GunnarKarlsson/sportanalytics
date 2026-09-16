@@ -2,7 +2,18 @@
 //!
 //! Official World Masters Athletics / USATF MLDR tables are large lookup grids.
 //! This module ships a compact interpolated approximation so the crate stays
-//! dependency-free. Treat percentages as estimates, not championship scoring.
+//! dependency-free. Open times for 5K–marathon are 2025-era road world records
+//! (see [`open_standard_secs`]); age-grade percentages can run a few points
+//! high versus 2015/2020 championship tables. Treat them as estimates, not
+//! championship scoring.
+//!
+//! ```text
+//! age_factor(age, sex) ∈ (0, 1]          // 1.0 in open/prime years
+//! age_standard         = open_standard / age_factor
+//! age_grade %          = 100 × age_standard / actual_time
+//! open_equivalent      = actual_time × age_factor
+//! time_at_age_n        = actual_time × age_factor(current) / age_factor(n)
+//! ```
 //!
 //! ```text
 //! age_factor(age, sex) ∈ (0, 1]          // 1.0 in open/prime years
@@ -131,12 +142,24 @@ impl PerformanceLevel {
     }
 }
 
-/// Approximate 2025-era open (prime-age) road standards, seconds.
+/// Open (prime-age) standard time in seconds for age grading.
 ///
-/// 5K–marathon aligned with commonly cited WMA/USATF open standards.
-/// 3K uses a track-adjacent open standard (no official road 3K table).
-/// [`Distance::Custom`] is linearly interpolated (or extrapolated) in metres
-/// between those named standards.
+/// **5K–marathon** values are 2025-era World Athletics *road world records*
+/// to the whole second. They match the USATF Masters Long Distance Running
+/// (MLDR) 2025 open standards compiled by Alan Jones (approved 2025-01-10).
+/// Men's marathon `7235` s is 2:00:35. Later records are not folded in; these
+/// figures are frozen.
+///
+/// Official 2015/2020 WMA/USATF open standards are often slower. Using
+/// world-record open times makes age-grade percentages a few points *higher*
+/// than those older championship tables.
+///
+/// **3K** has no official road table; the values are rounded track-adjacent
+/// stand-ins. [`Distance::Custom`] is linearly interpolated (or extrapolated)
+/// in metres between the named standards.
+///
+/// Age *factors* here remain a compact interpolation, not the official
+/// WMA/USATF grid. Treat [`age_grade`] percentages as estimates.
 pub fn open_standard_secs(distance: Distance, gender: Gender) -> f64 {
     match distance {
         Distance::Custom { meters, .. } => interpolate_open_standard(meters, gender),
@@ -146,16 +169,16 @@ pub fn open_standard_secs(distance: Distance, gender: Gender) -> f64 {
 
 fn named_open_standard_secs(distance: Distance, gender: Gender) -> f64 {
     match (gender, distance) {
-        (Gender::Male, Distance::ThreeK) => 440.0,         // 7:20
-        (Gender::Male, Distance::FiveK) => 769.0,          // 12:49
-        (Gender::Male, Distance::TenK) => 1_584.0,         // 26:24
-        (Gender::Male, Distance::HalfMarathon) => 3_451.0, // 57:31
-        (Gender::Male, Distance::Marathon) => 7_235.0,     // 2:00:35
-        (Gender::Female, Distance::ThreeK) => 500.0,       // 8:20
-        (Gender::Female, Distance::FiveK) => 834.0,        // 13:54
-        (Gender::Female, Distance::TenK) => 1_726.0,       // 28:46
-        (Gender::Female, Distance::HalfMarathon) => 3_772.0, // 1:02:52
-        (Gender::Female, Distance::Marathon) => 7_796.0,   // 2:09:56
+        (Gender::Male, Distance::ThreeK) => 440.0, // 7:20 track-adjacent
+        (Gender::Male, Distance::FiveK) => 769.0,  // 12:49 road WR
+        (Gender::Male, Distance::TenK) => 1_584.0, // 26:24 road WR
+        (Gender::Male, Distance::HalfMarathon) => 3_451.0, // 57:31 road WR
+        (Gender::Male, Distance::Marathon) => 7_235.0, // 2:00:35 road WR
+        (Gender::Female, Distance::ThreeK) => 500.0, // 8:20 track-adjacent
+        (Gender::Female, Distance::FiveK) => 834.0, // 13:54 road WR
+        (Gender::Female, Distance::TenK) => 1_726.0, // 28:46 road WR
+        (Gender::Female, Distance::HalfMarathon) => 3_772.0, // 1:02:52 road WR
+        (Gender::Female, Distance::Marathon) => 7_796.0, // 2:09:56 road WR
         (_, Distance::Custom { .. }) => unreachable!("named distances only"),
     }
 }
@@ -406,6 +429,26 @@ mod tests {
             open_standard_secs(Distance::FiveK, Gender::Female)
                 > open_standard_secs(Distance::FiveK, Gender::Male)
         );
+    }
+
+    #[test]
+    fn open_standards_match_2025_era_road_world_records() {
+        // Frozen 2025-era World Athletics road WRs / USATF MLDR 2025 open times.
+        let cases = [
+            (Distance::FiveK, Gender::Male, 769.0),
+            (Distance::TenK, Gender::Male, 1_584.0),
+            (Distance::HalfMarathon, Gender::Male, 3_451.0),
+            (Distance::Marathon, Gender::Male, 7_235.0),
+            (Distance::FiveK, Gender::Female, 834.0),
+            (Distance::TenK, Gender::Female, 1_726.0),
+            (Distance::HalfMarathon, Gender::Female, 3_772.0),
+            (Distance::Marathon, Gender::Female, 7_796.0),
+        ];
+        for (d, g, secs) in cases {
+            assert_eq!(open_standard_secs(d, g), secs);
+        }
+        assert_eq!(open_standard_secs(Distance::ThreeK, Gender::Male), 440.0);
+        assert_eq!(open_standard_secs(Distance::ThreeK, Gender::Female), 500.0);
     }
 
     #[test]

@@ -154,12 +154,12 @@ println!(
 
 Performance bands: ≥100% world-record level, ≥90% world class, ≥80% national, ≥70% regional, ≥60% local, ≥50% recreational, else developing.
 
-`age_factor` and `open_standard_secs` are public if you need the pieces. 3K uses a track-adjacent open standard; there is no official road 3K table.
+`age_factor` and `open_standard_secs` are public if you need the pieces. 5K–marathon open times are 2025-era World Athletics road world records (men’s marathon 2:00:35), matching USATF MLDR 2025 open standards; they are faster than 2015/2020 championship tables, so age-grade % runs a few points high versus those. 3K uses a rounded track-adjacent stand-in; there is no official road 3K table.
 
 ## Notes
 
 - VDOT is *effective* VO2max (economy included), not a lab test.
-- Age factors are a WMA-style *approximation*, not official World Masters Athletics or USATF scoring tables.
+- Age factors are a WMA-style *approximation*, not official World Masters Athletics or USATF scoring tables. Open 5K–marathon times are 2025-era road world records (USATF MLDR 2025 open standards).
 - Predictions assume a flat, all-out effort and similar training specificity.
 - No crate dependencies by default; all math is `std`. Optional `serde` feature for `Serialize`/`Deserialize`.
 - `Cargo.lock` is committed so clones and CI share a pinned graph. Dependents of the library still ignore it and resolve from `Cargo.toml`.
@@ -171,7 +171,7 @@ The running module implements published equations. It is not copied from another
 - **VDOT / equivalents / training intensities:** Jack Daniels and Jimmy Gilbert, *Oxygen Power* (1979) — oxygen cost of running and sustainable %VO2max versus duration. Training zones here invert those equations at fixed % of VDOT; they are not a transcription of Daniels’ published pace charts.
 - **Riegel:** Pete Riegel (1977, *Runner’s World*; 1981, *American Scientist*) — `T2 = T1 * (D2/D1)^1.06`.
 - **Cameron:** David Cameron’s road-race fit — `T2 = T1 * (D2/D1) * f(D1)/f(D2)`.
-- **Age grading:** compact interpolated factors in the spirit of WMA/USATF road age grading. Percentages are estimates, not championship scores.
+- **Age grading:** compact interpolated age factors in the spirit of WMA/USATF road tables. Open 5K–marathon times are 2025-era World Athletics road world records (USATF MLDR 2025 open standards compiled by Alan Jones), not a copy of the official lookup grid. Percentages are estimates, not championship scores.
 
 ## Layout for more sports
 

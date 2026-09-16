@@ -28,3 +28,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RaceTime::from_hms` rejects minutes or seconds ≥ 60 (`InvalidHms`).
 - `time_from_vdot` returns `Result` (`UnsolvableTime`) instead of clamping to the 2–12 min/km bisection bracket. `predict_times` and `predict_daniels_and_cameron` do the same.
 - `Gender` is documented as WMA male/female table standards, not a general gender model.
+- `open_standard_secs` documents 5K–marathon times as 2025-era road world records (USATF MLDR 2025 open standards), so percentages can run high versus older championship tables.
