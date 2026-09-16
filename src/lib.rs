@@ -1,5 +1,7 @@
 //! Sport analytics crate. Sports live in their own modules so more can be added later.
 //!
+//! Crate name: `sportanalytics`. Repository: `sports-analytics`.
+//!
 //! Start with [`running`].
 //!
 //! Formulas: Daniels & Gilbert (1979) VDOT, Riegel (1977/1981), and Cameron’s

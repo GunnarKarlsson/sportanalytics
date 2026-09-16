@@ -1,5 +1,7 @@
 # sportanalytics
 
+Crate name: `sportanalytics`. Repository: `sports-analytics`.
+
 Multi-sport analytics crate. First module: **running**.
 
 Std-only helpers for widely used running formulas: Daniels–Gilbert VDOT (effective VO2max), race-time prediction (Daniels, Riegel, Cameron), Daniels training zones, and a compact WMA-style age-grade model.
