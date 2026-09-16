@@ -1,0 +1,44 @@
+name: Feature
+description: New formula, API, or sport module
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        0.1 is running only. Other sports belong in `sportanalytics::<sport>`, not the crate root.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What you cannot do with the current API.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Suggested types/functions, and the published formula if this is math.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Running (VDOT, prediction, zones, age grade)
+        - New sport module
+        - Packaging / docs / examples
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Tests, MSRV, or serde impact if you already know them.
+    validations:
+      required: false

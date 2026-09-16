@@ -115,6 +115,11 @@ crate or from copyrighted pace tables.
 - **Cameron:** David Cameron’s road-race fit — `T2 = T1 * (D2/D1) * f(D1)/f(D2)`.
 - **Age grading:** compact interpolated factors in the spirit of WMA/USATF road age grading. Open 5K–marathon times are 2025-era World Athletics road world records (USATF MLDR 2025 open standards compiled by Alan Jones). Percentages are estimates, not championship scores.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). This project follows the
+[Rust Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## License
 
 MIT

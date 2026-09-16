@@ -1,0 +1,58 @@
+name: Bug
+description: Incorrect result, panic, or docs/API mismatch
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Formula disagreement is in scope if you can cite a published source.
+        Do not paste copyrighted Daniels pace tables.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Function, inputs, and what went wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: Result you expected, and the source if this is a formula issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: What the crate returned, or the panic/error.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Crate version
+      placeholder: "0.1.0 or git SHA"
+    validations:
+      required: true
+
+  - type: input
+    id: rustc
+    attributes:
+      label: rustc
+      placeholder: "rustc 1.80.0 (from rustc -V)"
+    validations:
+      required: false
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal repro
+      description: Short snippet using the public API (`sportanalytics::running`).
+      render: rust
+    validations:
+      required: false
