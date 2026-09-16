@@ -33,6 +33,11 @@ toolchain. Do not raise MSRV without a reason in the PR.
 - Do not re-export new sports from the crate root. Add `src/<sport>/` and
   `sportanalytics::<sport>`.
 - User-visible API or behavior changes: a `[Unreleased]` note in `CHANGELOG.md`.
+- Age grading: the published crate ships the generated table
+  (`src/running/age_grade/mldr_2025.rs`); raw `data/age_grade/2025/AgeGrade.*`
+  files are provenance only. Regenerate via `scripts/gen_age_grade.py` — do not
+  hand-edit `mldr_2025.rs`. `SOURCE.txt` is packaged for citation; the RunScore
+  files are not.
 
 ## Release
 

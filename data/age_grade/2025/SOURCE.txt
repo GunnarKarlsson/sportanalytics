@@ -8,6 +8,9 @@ Approval:   2025-01-10 (USATF MLDR Council)
 Authors:    Alan Jones, Tom Bernhard
 License:    CC0-1.0 (see LICENSE.md in that repository)
 
+Published crate ships the generated table in src/running/age_grade/mldr_2025.rs;
+raw AgeGrade.* files here are provenance only (not packaged).
+
 These raw RunScore files are checked in for provenance. The published crate
 embeds a generated Rust table derived from them (see scripts/gen_age_grade.py
 → src/running/age_grade/mldr_2025.rs). Do not hand-edit the generated file;

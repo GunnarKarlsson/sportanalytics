@@ -19,6 +19,8 @@ include = [
     "LICENSE",
     "README.md",
     "CHANGELOG.md",
+    # Citation only; raw AgeGrade.* RunScore files stay in git, not the crate.
+    "data/age_grade/2025/SOURCE.txt",
 ]
 
 [package.metadata.docs.rs]
