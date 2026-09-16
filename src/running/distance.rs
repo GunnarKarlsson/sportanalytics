@@ -1,4 +1,6 @@
+use std::fmt;
 use std::hash::{Hash, Hasher};
+use std::str::FromStr;
 
 use crate::Error;
 
@@ -89,6 +91,45 @@ impl Distance {
     }
 }
 
+impl fmt::Display for Distance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.label())
+    }
+}
+
+impl FromStr for Distance {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let compact: String = s
+            .chars()
+            .filter(|c| !c.is_whitespace() && *c != '-')
+            .flat_map(|c| c.to_lowercase())
+            .collect();
+        match compact.as_str() {
+            "3k" | "3000" | "3000m" => Ok(Self::ThreeK),
+            "5k" | "5000" | "5000m" => Ok(Self::FiveK),
+            "10k" | "10000" | "10000m" => Ok(Self::TenK),
+            "hm" | "half" | "halfmarathon" => Ok(Self::HalfMarathon),
+            "fm" | "marathon" | "full" | "fullmarathon" => Ok(Self::Marathon),
+            other => parse_length(other),
+        }
+    }
+}
+
+fn parse_length(s: &str) -> Result<Distance, Error> {
+    if let Some(num) = s.strip_suffix('m') {
+        let meters: f64 = num.parse().map_err(|_| Error::UnrecognizedDistance)?;
+        return Distance::from_meters(meters);
+    }
+    if let Some(num) = s.strip_suffix('k') {
+        let km: f64 = num.parse().map_err(|_| Error::UnrecognizedDistance)?;
+        return Distance::from_meters(km * 1_000.0);
+    }
+    let meters: f64 = s.parse().map_err(|_| Error::UnrecognizedDistance)?;
+    Distance::from_meters(meters)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -139,5 +180,29 @@ mod tests {
             Distance::from_meters(f64::INFINITY),
             Err(Error::InvalidDistance)
         );
+    }
+
+    #[test]
+    fn display_uses_label() {
+        assert_eq!(Distance::FiveK.to_string(), "5K");
+        assert_eq!(Distance::custom(8_000.0, "8K").unwrap().to_string(), "8K");
+    }
+
+    #[test]
+    fn from_str_named_aliases() {
+        assert_eq!("5K".parse::<Distance>().unwrap(), Distance::FiveK);
+        assert_eq!("hm".parse::<Distance>().unwrap(), Distance::HalfMarathon);
+        assert_eq!("marathon".parse::<Distance>().unwrap(), Distance::Marathon);
+        assert_eq!("10k".parse::<Distance>().unwrap(), Distance::TenK);
+        assert_eq!("3K".parse::<Distance>().unwrap(), Distance::ThreeK);
+    }
+
+    #[test]
+    fn from_str_custom_length() {
+        let eight = "8k".parse::<Distance>().unwrap();
+        assert_eq!(eight.meters(), 8_000.0);
+        let mile = "16093.4m".parse::<Distance>().unwrap();
+        assert!((mile.meters() - 16_093.4).abs() < 1e-9);
+        assert_eq!("nope".parse::<Distance>(), Err(Error::UnrecognizedDistance));
     }
 }

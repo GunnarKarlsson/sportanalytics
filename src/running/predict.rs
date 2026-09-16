@@ -10,6 +10,7 @@
 use super::time::format_hms;
 use super::vo2::{time_from_vdot, vdot};
 use super::{Distance, RaceTime, Vdot};
+use std::fmt;
 
 /// Which scaling model to use for [`predict_times`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -26,7 +27,7 @@ pub enum PredictionModel {
 ///
 /// [`Self::seconds`] also works for [`Distance::Custom`] by re-running the same
 /// model from [`Self::source`].
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PredictedTimes {
     /// Model that produced these times.
     pub model: PredictionModel,
@@ -69,8 +70,24 @@ impl PredictedTimes {
     }
 }
 
+impl fmt::Display for PredictedTimes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{:?} VDOT {}  3K {}  5K {}  10K {}  HM {}  FM {}",
+            self.model,
+            self.vdot,
+            self.formatted(Distance::ThreeK),
+            self.formatted(Distance::FiveK),
+            self.formatted(Distance::TenK),
+            self.formatted(Distance::HalfMarathon),
+            self.formatted(Distance::Marathon)
+        )
+    }
+}
+
 /// Daniels VDOT equivalents and Cameron-scaled times from the same race.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct DualPredictedTimes {
     /// VDOT implied by the input race.
     pub vdot: Vdot,
@@ -226,5 +243,14 @@ mod tests {
         let expected = riegel(five, eight);
         assert!((pred.seconds(eight) - expected).abs() < 1e-9);
         assert_eq!(pred.source, five);
+    }
+
+    #[test]
+    fn predicted_times_display_includes_distances() {
+        let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let s = predict_times(five, PredictionModel::DanielsVdot).to_string();
+        assert!(s.contains("5K"));
+        assert!(s.contains("HM"));
+        assert!(s.contains("VDOT"));
     }
 }

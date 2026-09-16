@@ -17,6 +17,8 @@
 //! Paces are computed from those equations, not copied from Daniels’ published
 //! (copyrighted) pace tables.
 
+use std::fmt;
+
 use super::vo2::{vdot, velocity_from_vo2};
 use super::{RaceTime, Vdot};
 
@@ -32,7 +34,7 @@ pub struct PaceRange {
 }
 
 /// Daniels training zones derived from a VDOT.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct TrainingZones {
     /// VDOT used to compute the zones.
     pub vdot: Vdot,
@@ -82,6 +84,26 @@ pub fn training_zones(race: RaceTime) -> TrainingZones {
 pub fn format_pace(sec_per_km: f64) -> String {
     let total = sec_per_km.round() as u64;
     format!("{}:{:02} /km", total / 60, total % 60)
+}
+
+impl fmt::Display for TrainingZones {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "VDOT {}  E {}–{}  M {}–{}  T {}–{}  I {}–{}  R {}–{}",
+            self.vdot,
+            format_pace(self.easy.easy_end),
+            format_pace(self.easy.hard_end),
+            format_pace(self.marathon.easy_end),
+            format_pace(self.marathon.hard_end),
+            format_pace(self.threshold.easy_end),
+            format_pace(self.threshold.hard_end),
+            format_pace(self.interval.easy_end),
+            format_pace(self.interval.hard_end),
+            format_pace(self.repetition.easy_end),
+            format_pace(self.repetition.hard_end)
+        )
+    }
 }
 
 #[cfg(test)]
@@ -156,5 +178,14 @@ mod tests {
         assert_eq!(format_pace(307.4), "5:07 /km");
         assert_eq!(format_pace(307.6), "5:08 /km");
         assert_eq!(format_pace(60.0), "1:00 /km");
+    }
+
+    #[test]
+    fn training_zones_display_lists_bands() {
+        let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let s = training_zones(race).to_string();
+        assert!(s.contains("E "));
+        assert!(s.contains("T "));
+        assert!(s.contains("/km"));
     }
 }

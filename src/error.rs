@@ -12,6 +12,8 @@ pub enum Error {
     InvalidVdot,
     /// A custom distance was zero, negative, or non-finite.
     InvalidDistance,
+    /// A distance string was not a named distance or a positive length.
+    UnrecognizedDistance,
 }
 
 impl fmt::Display for Error {
@@ -23,6 +25,7 @@ impl fmt::Display for Error {
             Self::InvalidDistance => {
                 f.write_str("distance must be a positive finite number of metres")
             }
+            Self::UnrecognizedDistance => f.write_str("unrecognized distance"),
         }
     }
 }
@@ -50,6 +53,10 @@ mod tests {
         assert_eq!(
             Error::InvalidDistance.to_string(),
             "distance must be a positive finite number of metres"
+        );
+        assert_eq!(
+            Error::UnrecognizedDistance.to_string(),
+            "unrecognized distance"
         );
     }
 

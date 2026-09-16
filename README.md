@@ -41,7 +41,7 @@ Age and gender are used only by age grading. Daniels, Riegel, and Cameron predic
 
 **`Vdot`** — newtype around a positive finite Daniels VDOT. Inner math is still `f64`; the wrapper is used at API edges (`vdot`, `time_from_vdot`, `Vo2Estimate`, `training_zones_from_vdot`) so a VDOT is not confused with seconds or m/min. Cameron/Riegel times are *not* VDOT values.
 
-**`Error`** — `NonPositiveTime`, `EmptyRaces`, `InvalidVdot`, `InvalidDistance`. Implements `std::error::Error`.
+**`Error`** — `NonPositiveTime`, `EmptyRaces`, `InvalidVdot`, `InvalidDistance`, `UnrecognizedDistance`. Implements `std::error::Error`.
 
 ### VDOT / VO2max
 

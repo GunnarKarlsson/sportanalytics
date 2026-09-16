@@ -10,6 +10,8 @@
 //! VDOT is *effective* VO2max (running economy included), not a laboratory
 //! VO2max test.
 
+use std::fmt;
+
 use super::{Distance, RaceTime};
 use crate::Error;
 
@@ -42,6 +44,12 @@ impl Vdot {
 
     pub(crate) fn from_raw(value: f64) -> Self {
         Self(value)
+    }
+}
+
+impl fmt::Display for Vdot {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:.1}", self.0)
     }
 }
 
@@ -212,5 +220,13 @@ mod tests {
         assert!(percent_vo2max(15.0) > percent_vo2max(30.0));
         assert!(percent_vo2max(30.0) > percent_vo2max(120.0));
         assert!(percent_vo2max(10.0) > 0.8);
+    }
+
+    #[test]
+    fn vdot_display_one_decimal() {
+        let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let s = vdot(race).to_string();
+        assert!(s.contains('.'), "got {s}");
+        assert_eq!(s.chars().filter(|c| *c == '.').count(), 1);
     }
 }

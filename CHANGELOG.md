@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compact WMA-style age-grade approximation with open-equivalent and age-equivalent times.
 - Typed public surface: `Distance`, `RaceTime`, `Vdot`, `Error`.
 - Custom race distances via `Distance::from_meters` / `Distance::custom`.
+- `Copy` / `Display` on core result types; `FromStr` for `Distance` (`"5K"`, `"HM"`, `"marathon"`).
 - Zero runtime dependencies (`std` only).
 
 ### Changed

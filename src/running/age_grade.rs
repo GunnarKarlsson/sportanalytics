@@ -12,6 +12,8 @@
 //! time_at_age_n        = actual_time × age_factor(current) / age_factor(n)
 //! ```
 
+use std::fmt;
+
 use super::time::format_hms;
 use super::{Distance, RaceTime};
 
@@ -25,7 +27,7 @@ pub enum Gender {
 }
 
 /// Age-graded performance and optional equivalent time at another age.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct AgeGradeResult {
     /// Age-graded percentage (`100 × age_standard / actual_time`).
     pub percent: f64,
@@ -50,6 +52,22 @@ impl AgeGradeResult {
     /// Equivalent time at [`Self::equivalent_age`], if requested.
     pub fn equivalent_at_age_hms(&self) -> Option<String> {
         self.equivalent_at_age_secs.map(format_hms)
+    }
+}
+
+impl fmt::Display for AgeGradeResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{:.1}% {} | open eq {}",
+            self.percent,
+            self.level.label(),
+            self.open_equivalent_hms()
+        )?;
+        if let (Some(age), Some(hms)) = (self.equivalent_age, self.equivalent_at_age_hms()) {
+            write!(f, " | as {age}yo {hms}")?;
+        }
+        Ok(())
     }
 }
 
@@ -292,6 +310,15 @@ mod tests {
         assert!((ag.open_equivalent_secs - race.seconds()).abs() < 1e-9);
         assert!(ag.equivalent_at_age_secs.is_none());
         assert_eq!(ag.open_equivalent_hms(), "40:00");
+    }
+
+    #[test]
+    fn age_grade_display_includes_percent_and_open_eq() {
+        let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let s = age_grade(race, 42, Gender::Male, Some(25)).to_string();
+        assert!(s.contains('%'));
+        assert!(s.contains("open eq"));
+        assert!(s.contains("25yo"));
     }
 
     #[test]
