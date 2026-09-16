@@ -1,5 +1,5 @@
 //! Running analytics: VDOT / effective VO2max, race-time prediction, Daniels
-//! training zones, and a compact WMA-style age-grade model.
+//! training zones, and USATF MLDR 2025 road age grading.
 //!
 //! | Function | What it uses |
 //! |---|---|
@@ -7,7 +7,7 @@
 //! | [`predict_times`] | Daniels invert, Riegel `T2=T1*(D2/D1)^1.06`, or Cameron |
 //! | [`predict_daniels_and_cameron`] | Daniels and Cameron in one call |
 //! | [`training_zones`] / [`training_zones_from_vdot`] | Daniels %VDOT pace bands (E/M/T/I/R) |
-//! | [`age_grade()`] / [`age_equivalent()`] | Compact WMA-style age factors + open standards |
+//! | [`age_grade()`] / [`age_equivalent()`] | USATF MLDR 2025 single-year road tables |
 //!
 //! Age and gender are used only by age grading. Daniels, Riegel, and Cameron
 //! predictions do not take them. Predict first, then pass a predicted time into
@@ -29,7 +29,7 @@
 //!   times are *not* VDOT values.
 //! - [`crate::Error`] — `NonPositiveTime`, `EmptyRaces`, `InvalidVdot`,
 //!   `InvalidDistance`, `UnrecognizedDistance`, `InvalidHms`, `InvalidPace`,
-//!   `UnsolvableTime`.
+//!   `UnsolvableTime`, `AgeOutOfRange`, `UnsupportedAgeGradeDistance`.
 //!
 //! Internal math stays in metres and seconds. Kilometre vs mile appears only
 //! when constructing or displaying distances and paces.
@@ -52,13 +52,12 @@
 //!
 //! # Age grading
 //!
-//! [`Gender`] selects WMA male/female table standards, not a general gender
-//! model. Open 5K–marathon times are 2025-era road world records (USATF MLDR
-//! 2025 open standards); age-grade % can run a few points high versus 2015/2020
-//! championship tables. 3K is a track-adjacent stand-in.
-//!
-//! Performance bands: ≥100% world-record level, ≥90% world class, ≥80% national,
-//! ≥70% regional, ≥60% local, ≥50% recreational, else developing.
+//! [`age_grade`] looks up the official USATF MLDR 2025 road tables (Alan Jones /
+//! Tom Bernhard, approved 2025-01-10, CC0). Ages are **5..=99**. Road 3K is
+//! unsupported. Off-grid distances interpolate age standards in log-distance
+//! between neighbouring official events. [`Gender`] selects the male/female
+//! table columns. [`PerformanceLevel`] bands are informal community labels, not
+//! official WMA awards.
 //!
 //! # Examples
 //!
@@ -74,7 +73,8 @@ mod vo2;
 mod zones;
 
 pub use age_grade::{
-    age_equivalent, age_factor, age_grade, open_standard_secs, AgeGradeResult, Gender,
+    age_equivalent, age_equivalent_with, age_factor, age_factor_with, age_grade, age_grade_with,
+    open_standard_secs, open_standard_secs_with, AgeGradeResult, AgeGradeTable, Gender,
     PerformanceLevel,
 };
 pub use distance::Distance;

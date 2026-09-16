@@ -7,8 +7,8 @@
 //! Formulas: Daniels & Gilbert (1979) VDOT, Riegel (1977/1981), and Cameron’s
 //! road-race fit. Training paces are inverted from those equations, not copied
 //! from copyrighted Daniels pace tables. Published *Running Formula* charts
-//! will differ by a few seconds/km. Age factors are a WMA-style
-//! *approximation*, not official scoring tables.
+//! will differ by a few seconds/km. Age grading uses the official USATF MLDR
+//! 2025 road tables (not an approximation).
 //!
 //! VDOT is *effective* VO2max (running economy included), not a laboratory test.
 //!
@@ -35,7 +35,7 @@
 //! let zones = training_zones(five);
 //! let _easy = zones.easy.hard_end.to_string();
 //!
-//! let ag = age_grade(five, 42, Gender::Male, Some(25));
+//! let ag = age_grade(five, 42, Gender::Male, Some(25)).unwrap();
 //! assert!(ag.percent > 50.0);
 //! ```
 
@@ -59,7 +59,7 @@ pub use error::Error;
 pub mod prelude {
     pub use crate::running::{
         age_equivalent, age_grade, predict_daniels_and_cameron, predict_times, training_zones,
-        training_zones_from_vdot, vdot, vo2max_from_races, AgeGradeResult, Distance,
+        training_zones_from_vdot, vdot, vo2max_from_races, AgeGradeResult, AgeGradeTable, Distance,
         DualPredictedTimes, Gender, LengthUnit, Pace, PaceRange, PerformanceLevel, PredictedTimes,
         PredictionModel, RaceTime, TrainingZones, Vdot, Vo2Estimate, METERS_PER_MILE,
     };

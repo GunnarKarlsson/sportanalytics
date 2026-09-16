@@ -21,6 +21,11 @@ pub enum Error {
     InvalidPace,
     /// Daniels inversion found no finish time in the 2–12 min/km pace bracket.
     UnsolvableTime,
+    /// Age is outside the published table range (USATF MLDR 2025: 5..=99).
+    AgeOutOfRange,
+    /// Distance has no official age-grade row and cannot be interpolated
+    /// (outside the official span, or an unsupported named distance such as 3K).
+    UnsupportedAgeGradeDistance,
 }
 
 impl fmt::Display for Error {
@@ -37,6 +42,12 @@ impl fmt::Display for Error {
             Self::InvalidPace => f.write_str("pace must be a positive finite value"),
             Self::UnsolvableTime => {
                 f.write_str("no finish time in the 2–12 min/km VDOT solver bracket")
+            }
+            Self::AgeOutOfRange => {
+                f.write_str("age must be within the published age-grade table range (5–99)")
+            }
+            Self::UnsupportedAgeGradeDistance => {
+                f.write_str("distance is not supported for age grading")
             }
         }
     }
@@ -81,6 +92,14 @@ mod tests {
         assert_eq!(
             Error::UnsolvableTime.to_string(),
             "no finish time in the 2–12 min/km VDOT solver bracket"
+        );
+        assert_eq!(
+            Error::AgeOutOfRange.to_string(),
+            "age must be within the published age-grade table range (5–99)"
+        );
+        assert_eq!(
+            Error::UnsupportedAgeGradeDistance.to_string(),
+            "distance is not supported for age grading"
         );
     }
 

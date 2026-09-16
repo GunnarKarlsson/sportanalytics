@@ -8,7 +8,7 @@ use crate::Error;
 /// Road / track distance, including a caller-supplied custom length.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Distance {
-    /// 3,000 metres (track-adjacent; there is no official road 3K standard).
+    /// 3,000 metres (track-adjacent; no USATF MLDR 2025 road age-grade row).
     ThreeK,
     /// 5,000 metres.
     FiveK,

@@ -29,7 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Running module with Daniels–Gilbert VDOT / effective VO2max.
 - Race-time prediction via Daniels VDOT inversion, Riegel (`k = 1.06`), and Cameron.
 - Daniels-style training zones derived by inverting the oxygen-cost equations at fixed %VDOT (not copied pace tables).
-- Compact WMA-style age-grade approximation with open-equivalent and age-equivalent times.
+- Official USATF MLDR 2025 road age grading (Alan Jones / Tom Bernhard, CC0) with
+  open-equivalent and age-equivalent times; embedded generated table plus raw
+  RunScore provenance under `data/age_grade/2025/`.
+- `AgeGradeTable`, `age_grade_with` / `age_factor_with` / `age_equivalent_with` /
+  `open_standard_secs_with`.
+- `Error::AgeOutOfRange` and `Error::UnsupportedAgeGradeDistance`.
 - Typed public surface: `Distance`, `RaceTime`, `Vdot`, `Error`.
 - Custom race distances via `Distance::from_meters` / `Distance::custom`.
 - `Copy` / `Display` on core result types; `FromStr` for `Distance` (`"5K"`, `"HM"`, `"marathon"`).
@@ -40,12 +45,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking:** `age_grade` / `age_equivalent` / `age_factor` / `open_standard_secs`
+  return `Result`. `age_factor` requires a `Distance` (per-event factors). Ages
+  outside 5..=99 error (`AgeOutOfRange`); no clamping. `Distance::ThreeK` age
+  grading errors (`UnsupportedAgeGradeDistance`). `AgeGradeResult` adds `table`
+  and `age_standard_secs`.
 - `predict_times` no longer accepts unused `age` / `gender` arguments. Age adjustment is `age_grade` / `age_equivalent`.
 - Crate root re-exports only `Error`. Running types live under `sportanalytics::running` (or `sportanalytics::prelude`).
 - `RaceTime::from_hms` rejects minutes or seconds ≥ 60 (`InvalidHms`).
 - `time_from_vdot` returns `Result` (`UnsolvableTime`) instead of clamping to the 2–12 min/km bisection bracket. `predict_times` and `predict_daniels_and_cameron` do the same.
-- `Gender` is documented as WMA male/female table standards, not a general gender model.
-- `open_standard_secs` documents 5K–marathon times as 2025-era road world records (USATF MLDR 2025 open standards), so percentages can run high versus older championship tables.
+- `Gender` is documented as WMA/USATF male/female table standards, not a general gender model.
+- `PerformanceLevel` documented as informal community bands, not official awards.
 - Training-zone docs note that published Daniels *Running Formula* charts will differ by a few seconds/km.
 - `running` module rustdoc includes the README function and zone tables so docs.rs stands alone.
 - docs.rs builds with `--cfg docsrs` and `doc_cfg`; CI rustdoc fails on warnings.

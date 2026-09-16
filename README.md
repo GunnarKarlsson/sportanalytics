@@ -6,7 +6,7 @@
 [![CI](https://github.com/GunnarKarlsson/sports-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/GunnarKarlsson/sports-analytics/actions)
 
 Running analytics in Rust: Daniels–Gilbert VDOT (effective VO2max), race-time
-prediction, training zones, and a compact WMA-style age-grade model.
+prediction, training zones, and USATF MLDR 2025 road age grading.
 
 The published crate name is **`sportanalytics`**. This repository is
 `sports-analytics`. The layout is modular so other sports can be added later;
@@ -80,7 +80,7 @@ cargo run --example age_grade    # 42-year-old 5K
 | `predict_times` | Daniels invert, Riegel `T2 = T1 * (D2/D1)^1.06`, or Cameron |
 | `predict_daniels_and_cameron` | Daniels and Cameron in one call |
 | `training_zones` / `training_zones_from_vdot` | Daniels %VDOT pace bands (E/M/T/I/R) |
-| `age_grade` / `age_equivalent` | Compact WMA-style age factors + open standards |
+| `age_grade` / `age_equivalent` | USATF MLDR 2025 single-year road tables (CC0) |
 
 Age and gender are used only by age grading. Predict first, then pass a predicted
 time into `age_equivalent` if you need an age-adjusted figure.
@@ -101,7 +101,7 @@ Rust **1.71** (edition 2021).
 ## Accuracy / non-goals
 
 - VDOT is *effective* VO2max (economy included), not a lab test.
-- Age factors are a WMA-style *approximation*, not official World Masters Athletics or USATF scoring tables. Open 5K–marathon times are 2025-era road world records (USATF MLDR 2025 open standards), so percentages can run a few points high versus older championship tables.
+- Age grading looks up the official **USATF MLDR 2025** road tables (approved 2025-01-10). Ages **5–99**. Off-grid distances interpolate age standards in log-distance between neighbouring official events (Jones 2025). Road 3K is unsupported. This is not championship software of record, but it uses the same published table as the Howard Grubb MLDR 2025 calculator.
 - Predictions assume a flat, all-out effort and similar training specificity.
 - Published Daniels *Running Formula* charts will differ by a few seconds/km.
 - Default builds have no crate dependencies (`std` only). Enable `serde` for `Serialize`/`Deserialize`.
@@ -115,7 +115,7 @@ crate or from copyrighted pace tables.
 - **VDOT / equivalents / training intensities:** Jack Daniels and Jimmy Gilbert, *Oxygen Power* (1979) — oxygen cost of running and sustainable %VO2max versus duration. Training zones invert those equations at fixed % of VDOT.
 - **Riegel:** Pete Riegel (1977, *Runner’s World*; 1981, *American Scientist*) — `T2 = T1 * (D2/D1)^1.06`.
 - **Cameron:** David Cameron’s road-race fit — `T2 = T1 * (D2/D1) * f(D1)/f(D2)`.
-- **Age grading:** compact interpolated factors in the spirit of WMA/USATF road age grading. Open 5K–marathon times are 2025-era World Athletics road world records (USATF MLDR 2025 open standards compiled by Alan Jones). Percentages are estimates, not championship scores.
+- **Age grading:** USATF Masters Long Distance Running (MLDR) 2025 road tables by Alan Jones and Tom Bernhard (approved 2025-01-10). Source: [AlanLyttonJones/Age-Grade-Tables](https://github.com/AlanLyttonJones/Age-Grade-Tables) (`2025 Files/AgeGrade.zip`). Table data is **CC0-1.0**; the crate code is MIT.
 
 ## Contributing
 
@@ -124,4 +124,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). This project follows the
 
 ## License
 
-MIT
+MIT for crate code. Embedded USATF MLDR 2025 age-grade table data is CC0-1.0
+(Alan Jones / Tom Bernhard).

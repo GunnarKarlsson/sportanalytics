@@ -2,9 +2,9 @@
 
 use sportanalytics::running::{age_grade, Distance, Gender, RaceTime};
 
-fn main() {
-    let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
-    let ag = age_grade(five, 42, Gender::Male, Some(25));
+fn main() -> Result<(), sportanalytics::Error> {
+    let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0)?;
+    let ag = age_grade(five, 42, Gender::Male, Some(25))?;
     println!(
         "{:.1}% {} | open eq {} | as 25yo {}",
         ag.percent,
@@ -12,4 +12,5 @@ fn main() {
         ag.open_equivalent_hms(),
         ag.equivalent_at_age_hms().unwrap()
     );
+    Ok(())
 }
