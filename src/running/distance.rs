@@ -21,12 +21,14 @@ pub enum Distance {
     /// Any positive finite length. Prefer [`Distance::from_meters`] or
     /// [`Distance::custom`] so invalid values are rejected.
     ///
-    /// With the `serde` feature, custom labels are deserialized by leaking the
-    /// string so this type can stay [`Copy`].
+    /// With the `serde` feature, only `meters` is serialized. Deserialization
+    /// always uses the label `"custom"` (in-process labels from
+    /// [`Distance::custom`] are not preserved across serde). This keeps
+    /// [`Distance`] [`Copy`] without leaking strings.
     Custom {
         /// Length in metres.
         meters: f64,
-        /// Short display label (for example `"8K"`).
+        /// Short display label (for example `"8K"`). Not preserved by serde.
         label: &'static str,
     },
 }
@@ -197,8 +199,8 @@ fn parse_length(s: &str) -> Result<Distance, Error> {
     Distance::from_meters(meters)
 }
 
-// JSON cannot store `&'static str`. This owned copy is what serde reads/writes;
-// we convert back and leak the label so `Distance` stays `Copy`.
+// Serde keeps meters only for Custom so Distance stays Copy without Box::leak.
+// In-process labels from Distance::custom are not round-tripped.
 #[cfg(feature = "serde")]
 mod distance_serde {
     use super::Distance;
@@ -211,7 +213,7 @@ mod distance_serde {
         TenK,
         HalfMarathon,
         Marathon,
-        Custom { meters: f64, label: String },
+        Custom { meters: f64 },
     }
 
     impl From<Distance> for DistanceDto {
@@ -222,10 +224,7 @@ mod distance_serde {
                 Distance::TenK => Self::TenK,
                 Distance::HalfMarathon => Self::HalfMarathon,
                 Distance::Marathon => Self::Marathon,
-                Distance::Custom { meters, label } => Self::Custom {
-                    meters,
-                    label: label.to_owned(),
-                },
+                Distance::Custom { meters, .. } => Self::Custom { meters },
             }
         }
     }
@@ -240,9 +239,7 @@ mod distance_serde {
                 DistanceDto::TenK => Ok(Distance::TenK),
                 DistanceDto::HalfMarathon => Ok(Distance::HalfMarathon),
                 DistanceDto::Marathon => Ok(Distance::Marathon),
-                DistanceDto::Custom { meters, label } => {
-                    Distance::custom(meters, Box::leak(label.into_boxed_str()))
-                }
+                DistanceDto::Custom { meters } => Distance::from_meters(meters),
             }
         }
     }
@@ -379,8 +376,10 @@ mod tests {
             Distance::HalfMarathon
         );
         let eight = Distance::custom(8_000.0, "8K").unwrap();
-        let back: Distance = serde_json::from_str(&serde_json::to_string(&eight).unwrap()).unwrap();
+        let encoded = serde_json::to_string(&eight).unwrap();
+        assert_eq!(encoded, r#"{"Custom":{"meters":8000.0}}"#);
+        let back: Distance = serde_json::from_str(&encoded).unwrap();
         assert_eq!(back.meters(), 8_000.0);
-        assert_eq!(back.label(), "8K");
+        assert_eq!(back.label(), "custom");
     }
 }

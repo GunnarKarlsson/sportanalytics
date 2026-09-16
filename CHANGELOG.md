@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   grading errors (`UnsupportedAgeGradeDistance`). `AgeGradeResult` adds `table`
   and `age_standard_secs`.
 - **Breaking:** `PaceRange` edges are `Pace` instead of raw `f64` seconds/km.
+- With `serde`, `Distance::Custom` serializes `{ meters }` only and deserializes
+  with label `"custom"` (no `Box::leak`; in-process custom labels are not
+  preserved across serde).
 - `predict_times` no longer accepts unused `age` / `gender` arguments. Age adjustment is `age_grade` / `age_equivalent`.
 - Crate root re-exports only `Error`. Running types live under `sportanalytics::running` (or `sportanalytics::prelude`).
 - `RaceTime::from_hms` rejects minutes or seconds ≥ 60 (`InvalidHms`).
