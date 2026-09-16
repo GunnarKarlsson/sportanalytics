@@ -1,7 +1,7 @@
 use std::fmt;
 use std::time::Duration;
 
-use super::Distance;
+use super::{Distance, Pace};
 use crate::Error;
 
 /// A single race result: a distance and a positive finish time.
@@ -69,6 +69,21 @@ impl RaceTime {
         Self::new(distance, Duration::from_secs_f64(seconds))
     }
 
+    /// Build a race result from a distance and an average [`Pace`].
+    ///
+    /// Finish time is `pace.sec_per_meter() * distance.meters()`.
+    ///
+    /// ```
+    /// use sportanalytics::running::{Distance, Pace, RaceTime};
+    ///
+    /// let pace = Pace::from_hms_per_km(0, 4, 0).unwrap();
+    /// let five = RaceTime::from_pace(Distance::FiveK, pace).unwrap();
+    /// assert_eq!(five.seconds(), 1_200.0);
+    /// ```
+    pub fn from_pace(distance: Distance, pace: Pace) -> Result<Self, Error> {
+        Self::from_secs(distance, pace.sec_per_meter() * distance.meters())
+    }
+
     /// Race distance.
     pub const fn distance(self) -> Distance {
         self.distance
@@ -87,6 +102,19 @@ impl RaceTime {
     /// Finish time in minutes.
     pub fn minutes(self) -> f64 {
         self.seconds() / 60.0
+    }
+
+    /// Average pace over the race distance.
+    ///
+    /// ```
+    /// use sportanalytics::running::{Distance, RaceTime};
+    ///
+    /// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+    /// assert_eq!(five.pace().to_string(), "4:00 /km");
+    /// ```
+    pub fn pace(self) -> Pace {
+        Pace::from_sec_per_meter(self.seconds() / self.distance.meters())
+            .expect("RaceTime invariants imply a positive finite pace")
     }
 
     /// Average velocity in metres per minute (Daniels units).
@@ -161,6 +189,20 @@ mod tests {
     fn velocity_for_20_min_5k() {
         let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
         assert!((race.velocity_m_per_min() - 250.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn pace_from_20_min_5k() {
+        let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        assert_eq!(race.pace().to_string(), "4:00 /km");
+    }
+
+    #[test]
+    fn from_pace_builds_finish_time() {
+        let pace = Pace::from_hms_per_km(0, 4, 0).unwrap();
+        let race = RaceTime::from_pace(Distance::FiveK, pace).unwrap();
+        assert_eq!(race.seconds(), 1_200.0);
+        assert_eq!(race.pace().sec_per_km(), 240.0);
     }
 
     #[test]
