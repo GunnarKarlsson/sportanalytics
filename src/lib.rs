@@ -1,0 +1,47 @@
+//! Sport analytics crate. Sports live in their own modules so more can be added later.
+//!
+//! Start with [`running`].
+//!
+//! Formulas: Daniels & Gilbert (1979) VDOT, Riegel (1977/1981), and Cameron’s
+//! road-race fit. Training paces are inverted from those equations, not copied
+//! from copyrighted Daniels pace tables. Age factors are a WMA-style
+//! *approximation*, not official scoring tables.
+//!
+//! VDOT is *effective* VO2max (running economy included), not a laboratory test.
+//!
+//! # Example
+//!
+//! ```
+//! use sportanalytics::running::{
+//!     age_grade, predict_daniels_and_cameron, training_zones, vo2max_from_races, Distance,
+//!     Gender, RaceTime,
+//! };
+//!
+//! let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+//! let ten = RaceTime::from_hms(Distance::TenK, 0, 42, 0).unwrap();
+//!
+//! let vo2 = vo2max_from_races(&[five, ten]).unwrap();
+//! assert!(vo2.best.value() > 45.0);
+//!
+//! let both = predict_daniels_and_cameron(five);
+//! let _hm = both.daniels.formatted(Distance::HalfMarathon);
+//!
+//! let zones = training_zones(five);
+//! let _easy = sportanalytics::running::format_pace(zones.easy.hard_end);
+//!
+//! let ag = age_grade(five, 42, Gender::Male, Some(25));
+//! assert!(ag.percent > 50.0);
+//! ```
+
+#![deny(missing_docs)]
+
+mod error;
+pub mod running;
+
+pub use error::Error;
+pub use running::{
+    age_equivalent, age_grade, predict_daniels_and_cameron, predict_times, training_zones,
+    training_zones_from_vdot, vdot, vo2max_from_races, AgeGradeResult, Distance,
+    DualPredictedTimes, Gender, PaceRange, PerformanceLevel, PredictedTimes, PredictionModel,
+    RaceTime, TrainingZones, Vdot, Vo2Estimate,
+};

@@ -1,0 +1,15 @@
+[package]
+name = "sportanalytics"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+description = "Analytics helpers for sports. First sport: running (VDOT/VO2max, age grade, race predictions)."
+license = "MIT"
+readme = "README.md"
+keywords = ["running", "vo2max", "vdot", "age-grade", "race-prediction"]
+categories = ["science"]
+exclude = ["PROJECT.md", "TODO.md", "TODO2.md", "TODO3.md", "TODO4.md", "TODO5.md"]
+
+[dependencies]
+
+[dev-dependencies]
