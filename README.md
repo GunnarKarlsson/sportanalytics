@@ -11,6 +11,8 @@ Add the crate to `Cargo.toml`:
 ```toml
 [dependencies]
 sportanalytics = "0.1"
+# Optional JSON/API support (off by default; zero deps otherwise):
+# sportanalytics = { version = "0.1", features = ["serde"] }
 ```
 
 Then:
@@ -159,7 +161,7 @@ Performance bands: ≥100% world-record level, ≥90% world class, ≥80% nation
 - VDOT is *effective* VO2max (economy included), not a lab test.
 - Age factors are a WMA-style *approximation*, not official World Masters Athletics or USATF scoring tables.
 - Predictions assume a flat, all-out effort and similar training specificity.
-- No crate dependencies; all math is `std`.
+- No crate dependencies by default; all math is `std`. Optional `serde` feature for `Serialize`/`Deserialize`.
 - `Cargo.lock` is committed so clones and CI share a pinned graph. Dependents of the library still ignore it and resolve from `Cargo.toml`.
 
 ## Attribution

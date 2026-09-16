@@ -19,6 +19,9 @@ pub enum Distance {
     Marathon,
     /// Any positive finite length. Prefer [`Distance::from_meters`] or
     /// [`Distance::custom`] so invalid values are rejected.
+    ///
+    /// With the `serde` feature, custom labels are deserialized by leaking the
+    /// string so this type can stay [`Copy`].
     Custom {
         /// Length in metres.
         meters: f64,
@@ -130,6 +133,71 @@ fn parse_length(s: &str) -> Result<Distance, Error> {
     Distance::from_meters(meters)
 }
 
+// JSON cannot store `&'static str`. This owned copy is what serde reads/writes;
+// we convert back and leak the label so `Distance` stays `Copy`.
+#[cfg(feature = "serde")]
+mod distance_serde {
+    use super::Distance;
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    enum DistanceDto {
+        ThreeK,
+        FiveK,
+        TenK,
+        HalfMarathon,
+        Marathon,
+        Custom { meters: f64, label: String },
+    }
+
+    impl From<Distance> for DistanceDto {
+        fn from(distance: Distance) -> Self {
+            match distance {
+                Distance::ThreeK => Self::ThreeK,
+                Distance::FiveK => Self::FiveK,
+                Distance::TenK => Self::TenK,
+                Distance::HalfMarathon => Self::HalfMarathon,
+                Distance::Marathon => Self::Marathon,
+                Distance::Custom { meters, label } => Self::Custom {
+                    meters,
+                    label: label.to_owned(),
+                },
+            }
+        }
+    }
+
+    impl TryFrom<DistanceDto> for Distance {
+        type Error = crate::Error;
+
+        fn try_from(distance: DistanceDto) -> Result<Self, Self::Error> {
+            match distance {
+                DistanceDto::ThreeK => Ok(Distance::ThreeK),
+                DistanceDto::FiveK => Ok(Distance::FiveK),
+                DistanceDto::TenK => Ok(Distance::TenK),
+                DistanceDto::HalfMarathon => Ok(Distance::HalfMarathon),
+                DistanceDto::Marathon => Ok(Distance::Marathon),
+                DistanceDto::Custom { meters, label } => {
+                    Distance::custom(meters, Box::leak(label.into_boxed_str()))
+                }
+            }
+        }
+    }
+
+    impl Serialize for Distance {
+        fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            DistanceDto::from(*self).serialize(serializer)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Distance {
+        fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            DistanceDto::deserialize(deserializer)?
+                .try_into()
+                .map_err(serde::de::Error::custom)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -204,5 +272,19 @@ mod tests {
         let mile = "16093.4m".parse::<Distance>().unwrap();
         assert!((mile.meters() - 16_093.4).abs() < 1e-9);
         assert_eq!("nope".parse::<Distance>(), Err(Error::UnrecognizedDistance));
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_named_and_custom_roundtrip() {
+        let json = serde_json::to_string(&Distance::HalfMarathon).unwrap();
+        assert_eq!(
+            serde_json::from_str::<Distance>(&json).unwrap(),
+            Distance::HalfMarathon
+        );
+        let eight = Distance::custom(8_000.0, "8K").unwrap();
+        let back: Distance = serde_json::from_str(&serde_json::to_string(&eight).unwrap()).unwrap();
+        assert_eq!(back.meters(), 8_000.0);
+        assert_eq!(back.label(), "8K");
     }
 }

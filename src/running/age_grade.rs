@@ -19,6 +19,7 @@ use super::{Distance, RaceTime};
 
 /// Sex used by the age-grading tables.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Gender {
     /// Male / men open standards and age factors.
     Male,
@@ -28,6 +29,7 @@ pub enum Gender {
 
 /// Age-graded performance and optional equivalent time at another age.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AgeGradeResult {
     /// Age-graded percentage (`100 × age_standard / actual_time`).
     pub percent: f64,
@@ -73,6 +75,7 @@ impl fmt::Display for AgeGradeResult {
 
 /// Qualitative band for an age-graded percentage.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PerformanceLevel {
     /// ≥ 100%.
     WorldRecord,
@@ -409,5 +412,16 @@ mod tests {
         let ten = open_standard_secs(Distance::TenK, Gender::Male);
         assert!(s > five);
         assert!(s < ten);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_age_grade_roundtrip() {
+        let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let ag = age_grade(race, 42, Gender::Male, Some(25));
+        let back: AgeGradeResult =
+            serde_json::from_str(&serde_json::to_string(&ag).unwrap()).unwrap();
+        assert!((back.percent - ag.percent).abs() < 1e-6);
+        assert_eq!(back.level, ag.level);
     }
 }

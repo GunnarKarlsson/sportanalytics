@@ -3,6 +3,7 @@ use std::fmt;
 
 /// Errors returned by constructors and fallible analytics helpers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Error {
     /// A race time was zero, negative, or non-finite.
     NonPositiveTime,
@@ -64,5 +65,15 @@ mod tests {
     fn implements_std_error() {
         let err: Box<dyn StdError> = Box::new(Error::EmptyRaces);
         assert!(err.source().is_none());
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_error_roundtrip() {
+        let json = serde_json::to_string(&Error::EmptyRaces).unwrap();
+        assert_eq!(
+            serde_json::from_str::<Error>(&json).unwrap(),
+            Error::EmptyRaces
+        );
     }
 }

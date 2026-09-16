@@ -26,6 +26,7 @@ use super::{RaceTime, Vdot};
 ///
 /// `easy_end` is the slower edge; `hard_end` is the faster edge.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PaceRange {
     /// Slower edge (sec / km).
     pub easy_end: f64,
@@ -35,6 +36,7 @@ pub struct PaceRange {
 
 /// Daniels training zones derived from a VDOT.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TrainingZones {
     /// VDOT used to compute the zones.
     pub vdot: Vdot,
@@ -187,5 +189,16 @@ mod tests {
         assert!(s.contains("E "));
         assert!(s.contains("T "));
         assert!(s.contains("/km"));
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_training_zones_roundtrip() {
+        let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let zones = training_zones(race);
+        let back: TrainingZones =
+            serde_json::from_str(&serde_json::to_string(&zones).unwrap()).unwrap();
+        assert!((back.vdot.value() - zones.vdot.value()).abs() < 1e-12);
+        assert!((back.easy.hard_end - zones.easy.hard_end).abs() < 1e-6);
     }
 }

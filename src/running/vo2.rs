@@ -53,8 +53,24 @@ impl fmt::Display for Vdot {
     }
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for Vdot {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_f64(self.0)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Vdot {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = <f64 as serde::Deserialize>::deserialize(deserializer)?;
+        Vdot::new(value).map_err(serde::de::Error::custom)
+    }
+}
+
 /// Combined VDOT estimate from one or more races.
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Vo2Estimate {
     /// Per-race VDOT values, same order as the input slice.
     pub per_race: Vec<(Distance, Vdot)>,
@@ -228,5 +244,21 @@ mod tests {
         let s = vdot(race).to_string();
         assert!(s.contains('.'), "got {s}");
         assert_eq!(s.chars().filter(|c| *c == '.').count(), 1);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_vdot_roundtrip_and_rejects_invalid() {
+        let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let vd = vdot(race);
+        let back: Vdot = serde_json::from_str(&serde_json::to_string(&vd).unwrap()).unwrap();
+        assert_eq!(back.value(), vd.value());
+        let est = vo2max_from_races(&[race]).unwrap();
+        assert_eq!(
+            serde_json::from_str::<Vo2Estimate>(&serde_json::to_string(&est).unwrap()).unwrap(),
+            est
+        );
+        assert!(serde_json::from_str::<Vdot>("0").is_err());
+        assert!(serde_json::from_str::<Vdot>("-1").is_err());
     }
 }

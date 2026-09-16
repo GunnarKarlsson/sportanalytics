@@ -95,6 +95,31 @@ pub(crate) fn format_hms(total_secs: f64) -> String {
     }
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for RaceTime {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeStruct;
+        let mut state = serializer.serialize_struct("RaceTime", 2)?;
+        state.serialize_field("distance", &self.distance)?;
+        state.serialize_field("seconds", &self.seconds())?;
+        state.end()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for RaceTime {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct Helper {
+            distance: Distance,
+            seconds: f64,
+        }
+        let helper = Helper::deserialize(deserializer)?;
+        RaceTime::from_secs(helper.distance, helper.seconds).map_err(serde::de::Error::custom)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -156,5 +181,14 @@ mod tests {
         assert_eq!(format_hms(59.4), "0:59");
         assert_eq!(format_hms(59.6), "1:00");
         assert_eq!(format_hms(3600.0), "1:00:00");
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_roundtrip_and_rejects_zero() {
+        let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let back: RaceTime = serde_json::from_str(&serde_json::to_string(&race).unwrap()).unwrap();
+        assert_eq!(back, race);
+        assert!(serde_json::from_str::<RaceTime>(r#"{"distance":"FiveK","seconds":0}"#).is_err());
     }
 }

@@ -14,6 +14,7 @@ use std::fmt;
 
 /// Which scaling model to use for [`predict_times`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PredictionModel {
     /// Invert the Daniels–Gilbert VDOT equations (recommended).
     DanielsVdot,
@@ -28,6 +29,7 @@ pub enum PredictionModel {
 /// [`Self::seconds`] also works for [`Distance::Custom`] by re-running the same
 /// model from [`Self::source`].
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PredictedTimes {
     /// Model that produced these times.
     pub model: PredictionModel,
@@ -88,6 +90,7 @@ impl fmt::Display for PredictedTimes {
 
 /// Daniels VDOT equivalents and Cameron-scaled times from the same race.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DualPredictedTimes {
     /// VDOT implied by the input race.
     pub vdot: Vdot,
@@ -252,5 +255,20 @@ mod tests {
         assert!(s.contains("5K"));
         assert!(s.contains("HM"));
         assert!(s.contains("VDOT"));
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_predicted_times_roundtrip() {
+        let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
+        let pred = predict_times(five, PredictionModel::DanielsVdot);
+        let back: PredictedTimes =
+            serde_json::from_str(&serde_json::to_string(&pred).unwrap()).unwrap();
+        assert_eq!(back.model, pred.model);
+        assert_eq!(back.source, pred.source);
+        assert!((back.vdot.value() - pred.vdot.value()).abs() < 1e-12);
+        for d in Distance::all() {
+            assert!((back.seconds(d) - pred.seconds(d)).abs() < 1e-6);
+        }
     }
 }

@@ -11,6 +11,9 @@
 //!
 //! VDOT is *effective* VO2max (running economy included), not a laboratory test.
 //!
+//! Enable the `serde` feature to serialize public types. Default builds stay
+//! dependency-free.
+//!
 //! # Example
 //!
 //! ```

@@ -18,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Typed public surface: `Distance`, `RaceTime`, `Vdot`, `Error`.
 - Custom race distances via `Distance::from_meters` / `Distance::custom`.
 - `Copy` / `Display` on core result types; `FromStr` for `Distance` (`"5K"`, `"HM"`, `"marathon"`).
-- Zero runtime dependencies (`std` only).
+- Optional `serde` feature for serializing public types. Default builds stay dependency-free.
+- Zero runtime dependencies (`std` only) unless `serde` is enabled.
 
 ### Changed
 
