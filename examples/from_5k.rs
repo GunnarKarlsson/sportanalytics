@@ -1,8 +1,8 @@
 //! 20:00 5K: VDOT, race predictions, and Daniels training zones.
 
 use sportanalytics::running::{
-    format_pace, predict_daniels_and_cameron, predict_times, training_zones, vdot,
-    vo2max_from_races, Distance, PredictionModel, RaceTime,
+    predict_daniels_and_cameron, predict_times, training_zones, vdot, vo2max_from_races, Distance,
+    PredictionModel, RaceTime,
 };
 
 fn main() {
@@ -31,13 +31,5 @@ fn main() {
     );
 
     let z = training_zones(five);
-    println!(
-        "E {}–{}  T {}–{}  I {}–{}",
-        format_pace(z.easy.easy_end),
-        format_pace(z.easy.hard_end),
-        format_pace(z.threshold.easy_end),
-        format_pace(z.threshold.hard_end),
-        format_pace(z.interval.easy_end),
-        format_pace(z.interval.hard_end),
-    );
+    println!("E {}  T {}  I {}", z.easy, z.threshold, z.interval);
 }

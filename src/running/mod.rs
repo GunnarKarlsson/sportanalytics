@@ -78,4 +78,6 @@ pub use vo2::{
     oxygen_cost, percent_vo2max, time_from_vdot, vdot, velocity_from_vo2, vo2max_from_races, Vdot,
     Vo2Estimate,
 };
-pub use zones::{format_pace, training_zones, training_zones_from_vdot, PaceRange, TrainingZones};
+#[allow(deprecated)]
+pub use zones::format_pace;
+pub use zones::{training_zones, training_zones_from_vdot, PaceRange, TrainingZones};

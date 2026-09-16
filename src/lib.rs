@@ -33,7 +33,7 @@
 //! let _hm = both.daniels.formatted(Distance::HalfMarathon).unwrap();
 //!
 //! let zones = training_zones(five);
-//! let _easy = sportanalytics::running::format_pace(zones.easy.hard_end);
+//! let _easy = zones.easy.hard_end.to_string();
 //!
 //! let ag = age_grade(five, 42, Gender::Male, Some(25));
 //! assert!(ag.percent > 50.0);
