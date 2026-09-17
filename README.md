@@ -20,19 +20,25 @@ The published crate name is **`sportanalytics`**. This repository is
 cargo add sportanalytics
 ```
 
+Zero deps core lib:
 ```toml
 [dependencies]
-sportanalytics = "0.1"
-# Optional JSON/API support (off by default; zero deps otherwise):
+sportanalytics = "0.1" 
+```
+
+Add serde dep for JSON parsing:
+```toml
+[dependencies]
 # sportanalytics = { version = "0.1", features = ["serde"] }
 ```
 
+Use:
 ```rust
 use sportanalytics::running::*;
 ```
 
-The same items are also available from `sportanalytics::prelude`. The crate root
-re-exports only `sportanalytics::Error`.
+The same items are also available from `sportanalytics::prelude`. 
+The crate root re-exports only `sportanalytics::Error`.
 
 ## Quick start
 
@@ -42,33 +48,32 @@ use sportanalytics::running::{
 };
 
 fn main() -> Result<(), sportanalytics::Error> {
-    let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0)?;
-    println!("VDOT {:.1}", vdot(five).value());
+    // Use a 5K race time of 00:20:00 as example:
+    let five_k_race_time = RaceTime::from_hms(Distance::FiveK, 0, 20, 0)?;
+    println!("VDOT {:.1}", vdot(five_k_race_time).value());
 
-    let pred = predict_times(five, PredictionModel::DanielsVdot)?;
+    let prediction = predict_times(five_k_race_time, PredictionModel::DanielsVdot)?;
     println!(
         "HM {}  FM {}",
-        pred.formatted(Distance::HalfMarathon)?,
-        pred.formatted(Distance::Marathon)?
+        prediction.formatted(Distance::HalfMarathon)?,
+        prediction.formatted(Distance::Marathon)?
     );
 
-    let z = training_zones(five);
-    println!("E {}  T {}", z.easy, z.threshold);
-    println!("E miles {}", z.easy.display(LengthUnit::Mile));
+    let zones = training_zones(five_k_race_time);
+    println!("E {}  T {}", zones.easy, zones.threshold);
+    println!("E miles {}", zones.easy.display(LengthUnit::Mile));
 
-    // A 20:00 5K is VDOT ≈ 49.8; VDOT 50 predicts about 19:57 for 5K
-    // (equation output; printed Running Formula grids may differ by a few seconds).
     Ok(())
 }
 ```
 
-- Pace and zone `Display` default to **`/km`**. For miles, call
-  `.display(LengthUnit::Mile)`.
-- Distances accept kilometres or international miles at the I/O edge
-  (`Distance::from_km`, `Distance::from_miles`, or `"8mi".parse::<Distance>()`);
-  internal math stays in metres and seconds.
+- Pace and zone `Display` default to **`/km`**.
+- For miles, call `.display(LengthUnit::Mile)`.
+- Distances accept kilometres or international miles (`Distance::from_km`,
+  `Distance::from_miles`, or `"8mi".parse::<Distance>()`). Internal math is
+  in metres and seconds.
 
-Runnable programs (also listed on docs.rs):
+Runnable example programs (also listed on docs.rs):
 
 ```text
 cargo run --example from_5k      # VDOT, predictions, training zones from a 20:00 5K
@@ -77,42 +82,42 @@ cargo run --example age_grade    # 42-year-old 5K
 
 ## Features
 
-| Function | What it uses |
+| Function | What data or formula it uses |
 |---|---|
 | `vdot` / `vo2max_from_races` | Daniels–Gilbert 1979 VDOT (effective VO2max) |
-| `predict_times` | Daniels invert, Riegel `T2 = T1 * (D2/D1)^1.06`, or Cameron |
+| `predict_times` | Daniels invert, Riegel, or Cameron |
 | `predict_daniels_and_cameron` | Daniels and Cameron in one call |
 | `training_zones` / `training_zones_from_vdot` | Daniels %VDOT pace bands (E/M/T/I/R) |
 | `age_grade` / `age_equivalent` | USATF MLDR 2025 single-year road tables (CC0); both return `Result` |
 
-Age and gender are used only by age grading. Predict first, then pass a predicted
-time into `age_equivalent` if you need an age-adjusted figure. 
-
-Ages outside 5..=99 and unsupported distances (including road 3K) error — use `?` or
-`.unwrap()`.
+- Age and gender are used only by age grading.
+- If you need an age-adjusted figure, run the prediction first, then pass a
+  predicted time into `age_equivalent`.
+- Ages outside 5..=99 and unsupported distances result in error: use `?` or
+  `.unwrap()`.
 
 ### Age grading
+
+Example:
 
 ```rust
 use sportanalytics::running::{
     age_equivalent, age_grade, Distance, Gender, RaceTime,
 };
 
-fn main() -> Result<(), sportanalytics::Error> {
-    let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0)?;
-    let ag = age_grade(race, 42, Gender::Male, Some(25))?;
-    println!(
-        "{:.1}% {} | open eq {} | table {:?}",
-        ag.percent,
-        ag.level.label(),
-        ag.open_equivalent_hms(),
-        ag.table
-    );
+let race_time = RaceTime::from_hms(Distance::FiveK, 0, 20, 0)?;
+let age_grade = age_grade(race_time, 42, Gender::Male, Some(25))?;
+println!(
+    "{:.1}% {} | open eq {} | table {:?}",
+    age_grade.percent,
+    age_grade.level.label(),
+    age_grade.open_equivalent_hms(),
+    age_grade.table
+);
 
-    let as_25 = age_equivalent(race, 42, Gender::Male, 25)?;
-    println!("equivalent at 25: {as_25:.1}s");
-    Ok(())
-}
+let as_25 = age_equivalent(race_time, 42, Gender::Male, 25)?;
+println!("equivalent at 25: {as_25:.1}s");
+   
 ```
 
 - Named distances are 3K, 5K, 10K, half marathon, and marathon; other lengths use
@@ -125,17 +130,15 @@ fn main() -> Result<(), sportanalytics::Error> {
 
 Full types and formulas: [docs.rs/sportanalytics](https://docs.rs/sportanalytics).
 
-## MSRV
-
-Rust **1.71** (edition 2021).
 
 ## Accuracy / non-goals
 
-- VDOT is *effective* VO2max (economy included), not a lab test. This crate
-  implements the Daniels–Gilbert *Oxygen Power* (1979) equations, not the
-  copyrighted printed lookup tables.
-- Daniels predictions are VDOT-equivalent performances; Riegel is a power law
-  (`k = 1.06`); Cameron is a distance-weighted road fit. None include hills,
+### Formulas
+- VDOT is *effective* VO2max (economy included). This crate implements the
+  Daniels–Gilbert *Oxygen Power* (1979) equations, not the copyrighted printed
+  lookup tables.
+- Daniels predictions are VDOT-equivalent performances. Riegel is a power law
+  (`k = 1.06`). Cameron is a distance-weighted road fit. None include hills,
   heat, or wind.
 - Age grading looks up the official **USATF MLDR 2025** road tables
   (approved 2025-01-10). Ages **5–99** (`AgeOutOfRange` otherwise). Off-grid
@@ -146,6 +149,8 @@ Rust **1.71** (edition 2021).
 - Predictions assume a flat, all-out effort and similar training specificity.
 - Published Daniels *Running Formula* charts will differ by a few seconds/km
   from equation output.
+
+### Builds
 - Default builds have no crate dependencies (`std` only). Enable `serde` for
   `Serialize`/`Deserialize`.
 - Crate 0.1.0 does not include cycling, swimming, or other sports. Add those as
@@ -157,21 +162,24 @@ The running module implements published equations. It is not copied from another
 crate or from copyrighted pace tables.
 
 - **VDOT / equivalents / training intensities:** Jack Daniels and Jimmy Gilbert,
-  *Oxygen Power* (1979) — oxygen cost of running and sustainable %VO2max versus
+  *Oxygen Power* (1979): oxygen cost of running and sustainable %VO2max versus
   duration. This crate implements those equations (not copyrighted printed pace
   grids). Training zones invert the oxygen-cost curve at fixed % of VDOT
   (E 0.59–0.74, M 0.75–0.84, T 0.83–0.88, I 0.95–1.00, R 1.05–1.10).
 - **Riegel:** Pete Riegel (1977, *Runner’s World*; 1981, *American Scientist*) —
-  `T2 = T1 * (D2/D1)^1.06`. The exponent `1.06` is the published default; it is
+  `T2 = T1 * (D2/D1)^1.06`. The exponent `1.06` is the published default. It is
   not fitted per athlete.
 - **Cameron:** David Cameron’s published road-race fit (commonly dated late
-  1990s; public calculator coefficients) —
-  `T2 = T1 * (D2/D1) * f(D1)/f(D2)` with
+  1990s): `T2 = T1 * (D2/D1) * f(D1)/f(D2)` with
   `f(x) = 13.49681 - 0.000030363 x + 835.7114 / x^0.7905` (`x` in metres).
 - **Age grading:** USATF Masters Long Distance Running (MLDR) 2025 road tables
   by Alan Jones and Tom Bernhard (approved 2025-01-10). Source:
   [AlanLyttonJones/Age-Grade-Tables](https://github.com/AlanLyttonJones/Age-Grade-Tables)
   (`2025 Files/AgeGrade.zip`). Table data is **CC0-1.0**; the crate code is MIT.
+
+## MSRV
+
+Rust **1.71** (edition 2021).
 
 ## Contributing
 
