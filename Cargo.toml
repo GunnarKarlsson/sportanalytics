@@ -1,16 +1,18 @@
 [package]
 name = "sportanalytics"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 rust-version = "1.71"
 authors = ["Gunnar Karlsson <gunnar.h.karlsson@gmail.com>"]
-description = "Sport analytics in Rust: A crate for calculating metrics for running (Daniels VDOT, race prediction, USATF MLDR age grading) and cycling (FTP, critical power, Coggan zones, Martin road power–speed)."
+description = """
+Sport analytics in Rust. Running: Daniels VDOT, race prediction, training zones, USATF MLDR 2025 age grading. Cycling: FTP, critical power, Coggan zones, Martin road power–speed. Swimming: CSS, training zones, race prediction, World Aquatics points. Designed so other sports can be added later.
+"""
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/GunnarKarlsson/sportanalytics"
 homepage = "https://github.com/GunnarKarlsson/sportanalytics"
 documentation = "https://docs.rs/sportanalytics"
-keywords = ["running", "cycling", "vo2max", "vdot", "age-grade", "race-prediction", "ftp", "critical-power", "vdot"]
+keywords = ["running", "cycling", "swimming", "css", "vdot"]
 categories = ["science"]
 include = [
     "src/**/*",
@@ -52,3 +54,7 @@ path = "examples/cycling/from_20min.rs"
 [[example]]
 name = "from_tt"
 path = "examples/cycling/from_tt.rs"
+
+[[example]]
+name = "from_400_200"
+path = "examples/swimming/from_400_200.rs"

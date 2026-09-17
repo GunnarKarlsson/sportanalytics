@@ -7,14 +7,15 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/GunnarKarlsson/sportanalytics/actions/workflows/ci.yml/badge.svg)](https://github.com/GunnarKarlsson/sportanalytics/actions)
 
-Running and cycling analytics in Rust. **0.2** ships Daniels–Gilbert VDOT,
-race-time prediction, training zones, and USATF MLDR 2025 road age grading for
-running, plus FTP, critical power, Coggan zones, Hawley–Noakes VO2, and Martin
-road power–speed for cycling.
+Running, cycling, and swimming analytics in Rust. **0.3** ships Daniels–Gilbert
+VDOT, race-time prediction, training zones, and USATF MLDR 2025 road age grading
+for running; FTP, critical power, Coggan zones, Hawley–Noakes VO2, and Martin
+road power–speed for cycling; and Critical Swim Speed (CSS), training zones,
+Riegel swimming prediction, and World Aquatics points for swimming.
 
 The published crate name is **`sportanalytics`**. Sports live in sibling
-modules (`sportanalytics::running`, `sportanalytics::cycling`); the crate root
-re-exports only `Error`.
+modules (`sportanalytics::running`, `sportanalytics::cycling`,
+`sportanalytics::swimming`); the crate root re-exports only `Error`.
 
 ## Install
 
@@ -25,19 +26,20 @@ cargo add sportanalytics
 Default (no extra dependencies):
 ```toml
 [dependencies]
-sportanalytics = "0.2.0"
+sportanalytics = "0.3.0"
 ```
 
 Optional JSON support:
 ```toml
 [dependencies]
-sportanalytics = { version = "0.2.0", features = ["serde"] }
+sportanalytics = { version = "0.3.0", features = ["serde"] }
 ```
 
 Then in code:
 ```rust
 use sportanalytics::running::*;
 // or: use sportanalytics::cycling::*;
+// or: use sportanalytics::swimming::*;
 ```
 
 Running items are also available from `sportanalytics::prelude` (running-only).
@@ -153,8 +155,6 @@ Full types and formulas: [docs.rs/sportanalytics](https://docs.rs/sportanalytics
 
 ## Cycling
 
-Example:
-
 ```rust
 use sportanalytics::cycling::{
     critical_power, ftp_from_20min, predict_power_from_cp, training_zones, Effort,
@@ -212,17 +212,62 @@ FTP is an operational training anchor, not laboratory lactate threshold.
 Estimated VO2 is a field estimate, not gas analysis. Age helpers use ages
 **15..=90** and are not USATF/VTTA age grading.
 
+## Swimming
+
+```rust
+use sportanalytics::swimming::{
+    css_from_trials, predict_times, training_zones_from_css, wa_points_with,
+    Course, Event, PredictionModel, Stroke, SwimTime,
+};
+
+fn main() -> Result<(), sportanalytics::Error> {
+    let t200 = SwimTime::from_hms_cents(
+        Event::M200, Course::Scm, Stroke::Free, 0, 2, 30, 0,
+    )?;
+    let t400 = SwimTime::from_hms_cents(
+        Event::M400, Course::Scm, Stroke::Free, 0, 5, 20, 0,
+    )?;
+    let css = css_from_trials(t200, t400)?;
+    println!("CSS {:.1} s/100m", css.pace()?.sec_per_100m());
+    let zones = training_zones_from_css(css)?;
+    println!("threshold {}", zones.threshold);
+    let pred = predict_times(t400, PredictionModel::Riegel)?;
+    println!("Riegel 1500 {}", pred.formatted(Event::M1500)?);
+    println!("WA pts {}", wa_points_with(t400.seconds(), 220.0)?);
+    Ok(())
+}
+```
+
+```text
+cargo run --example from_400_200   # examples/swimming/from_400_200.rs
+```
+
+### Features
+
+| Function | What data or formula it uses |
+|---|---|
+| `css_from_trials` / `css_from_trials_n` | Wakayoshi 1992 slope of D vs T (CSS + ADC) |
+| `css_from_t30` | Distance covered in 1800 s |
+| `training_zones` / `training_zones_from_css` | CSS pace ± coaching offsets per 100 m |
+| `predict_times` / `predict_from_css` | CSS+ADC or Riegel `k = 1.03` |
+| `wa_points` / `wa_points_with` | World Aquatics `P = floor(1000 (B/T)^3)` |
+| `swolf` / `distance_per_stroke` | Length time + stroke count |
+
+Pace `Display` defaults to **`/100m`**. For yards, call
+`.display(LengthUnit::Per100y)`. Internal math is metres and seconds.
+
 ## Builds
 
 - Default builds have no crate dependencies (`std` only). Enable `serde` for
   `Serialize`/`Deserialize`.
-- Crate 0.2 ships **running** and **cycling**. Further sports should be sibling
-  modules; do not dump new sports onto the crate root or into `prelude`.
+- Crate 0.3 ships **running**, **cycling**, and **swimming**. Further sports
+  should be sibling modules; do not dump new sports onto the crate root or into
+  `prelude`.
 
 ## Attribution
 
-The running and cycling modules implement published equations. They are not
-copied from another crate or from copyrighted pace/power charts.
+The running, cycling, and swimming modules implement published equations. They
+are not copied from another crate or from copyrighted pace/power charts.
 
 ### Running
 
@@ -253,6 +298,18 @@ copied from another crate or from copyrighted pace/power charts.
   wind, drivetrain η).
 - **Age factor:** trained-endurance decline approximation (~0.5%/year after ~35);
   not VTTA/CTT/WMA tables.
+
+### Swimming
+
+- **CSS / ADC:** Wakayoshi et al. (1992) critical swim speed — slope of distance
+  versus time for two (or N) maximal efforts. T-30 uses distance in 1800 s.
+- **Training zones:** coaching offsets in seconds per 100 m from CSS pace (not
+  copyrighted printed CSS charts).
+- **Riegel:** Pete Riegel (1981, *American Scientist*) swimming factor
+  `T2 = T1 * (D2/D1)^1.03` (not the running `1.06`).
+- **World Aquatics points:** public formula `P = floor(1000 * (B/T)^3)`. Base
+  times `B` change by year; pass `B` in or use a generated table — do not
+  hand-edit full grids.
 
 ## MSRV
 

@@ -45,6 +45,18 @@ pub enum Error {
     InvalidPhysicsParam,
     /// Power↔speed bisection did not bracket a root.
     UnsolvableSpeed,
+    /// Two CSS trials used the same distance, or a non-positive distance gap.
+    TrialsSameDistance,
+    /// The longer trial was not slower than the shorter trial (`T_long <= T_short`).
+    TrialsNotOrdered,
+    /// CSS slope was zero, negative, or non-finite.
+    UnsolvableCss,
+    /// World Aquatics points requested for an event/course/sex with no base time.
+    UnsupportedWaEvent,
+    /// Stroke count was zero, negative, or non-finite (SWOLF / DPS).
+    InvalidStrokeCount,
+    /// Hundredths were ≥ 100 in a swim `from_hms_cents` constructor.
+    InvalidCents,
 }
 
 impl fmt::Display for Error {
@@ -86,6 +98,18 @@ impl fmt::Display for Error {
             Self::UnsolvableSpeed => {
                 f.write_str("no speed in the solver bracket matches the given power")
             }
+            Self::TrialsSameDistance => {
+                f.write_str("CSS trials must use distinct positive distances")
+            }
+            Self::TrialsNotOrdered => {
+                f.write_str("longer CSS trial must be slower than the shorter trial")
+            }
+            Self::UnsolvableCss => f.write_str("CSS slope was zero, negative, or non-finite"),
+            Self::UnsupportedWaEvent => {
+                f.write_str("no World Aquatics base time for this event/course/sex")
+            }
+            Self::InvalidStrokeCount => f.write_str("stroke count must be a positive finite value"),
+            Self::InvalidCents => f.write_str("hundredths must be less than 100"),
         }
     }
 }
@@ -169,6 +193,30 @@ mod tests {
         assert_eq!(
             Error::UnsolvableSpeed.to_string(),
             "no speed in the solver bracket matches the given power"
+        );
+        assert_eq!(
+            Error::TrialsSameDistance.to_string(),
+            "CSS trials must use distinct positive distances"
+        );
+        assert_eq!(
+            Error::TrialsNotOrdered.to_string(),
+            "longer CSS trial must be slower than the shorter trial"
+        );
+        assert_eq!(
+            Error::UnsolvableCss.to_string(),
+            "CSS slope was zero, negative, or non-finite"
+        );
+        assert_eq!(
+            Error::UnsupportedWaEvent.to_string(),
+            "no World Aquatics base time for this event/course/sex"
+        );
+        assert_eq!(
+            Error::InvalidStrokeCount.to_string(),
+            "stroke count must be a positive finite value"
+        );
+        assert_eq!(
+            Error::InvalidCents.to_string(),
+            "hundredths must be less than 100"
         );
     }
 

@@ -2,9 +2,10 @@
 //!
 //! Crate name: `sportanalytics`. Repository: `sportanalytics`.
 //!
-//! Version **0.2** ships [`running`] and [`cycling`]. See
+//! Version **0.3** ships [`running`], [`cycling`], and [`swimming`]. See
 //! `examples/running/from_5k.rs`, `examples/running/age_grade.rs`,
-//! `examples/cycling/from_20min.rs`, and `examples/cycling/from_tt.rs`.
+//! `examples/cycling/from_20min.rs`, `examples/cycling/from_tt.rs`, and
+//! `examples/swimming/from_400_200.rs`.
 //!
 //! **Running:** Daniels & Gilbert, *Oxygen Power* (1979) VDOT equations (not
 //! copyrighted printed pace grids), Riegel (1977/1981, `k = 1.06`), and
@@ -14,6 +15,10 @@
 //! **Cycling:** operational FTP protocols, two-parameter critical power, Coggan
 //! %FTP zones, Hawley–Noakes VO2 estimate, Martin 1998 power–speed, and a
 //! trained-endurance age-factor curve (not official age-grade tables).
+//!
+//! **Swimming:** Critical Swim Speed (Wakayoshi 1992), CSS training zones,
+//! Riegel swimming prediction (`k = 1.03`), and World Aquatics points
+//! (`P = floor(1000 (B/T)^3)`).
 //!
 //! Enable the `serde` feature to serialize public types. Default builds stay
 //! dependency-free. New sports are **not** re-exported from the crate root.
@@ -49,13 +54,14 @@
 pub mod cycling;
 mod error;
 pub mod running;
+pub mod swimming;
 
 pub use error::Error;
 
-/// Common running types and functions.
+/// Common *running* types and functions.
 ///
-/// Prefer [`crate::running`] when adding another sport so names stay scoped.
-/// Cycling lives under [`crate::cycling`] (not this prelude).
+/// Prefer [`crate::running`], [`crate::cycling`], or [`crate::swimming`] so
+/// names stay scoped. Do not mix sports in this prelude.
 ///
 /// Pace and zone [`std::fmt::Display`] default to `/km`. For miles, call
 /// [`.display(LengthUnit::Mile)`](crate::running::Pace::display) (also on

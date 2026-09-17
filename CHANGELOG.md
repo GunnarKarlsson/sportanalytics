@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-17
+
+### Added
+
+- `sportanalytics::swimming`: course/stroke/sex, pool events, swim times with
+  hundredths, pace `/100m` (default) and `/100y`.
+- Critical Swim Speed (CSS) + ADC from two or N maximal trials (Wakayoshi 1992),
+  T-30, and a 1500 m velocity proxy.
+- CSS training zones (coaching offsets in s/100 m), Riegel prediction
+  (`k = 1.03`), CSS+ADC prediction, World Aquatics points formula with
+  `wa_points_with` / sample table, SWOLF and distance-per-stroke.
+- `examples/swimming/from_400_200.rs`.
+- Swimming error variants: `TrialsSameDistance`, `TrialsNotOrdered`,
+  `UnsolvableCss`, `UnsupportedWaEvent`, `InvalidStrokeCount`, `InvalidCents`.
+
 ## [0.2.0] - 2026-09-17
 
 ### Added
