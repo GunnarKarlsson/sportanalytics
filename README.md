@@ -17,7 +17,7 @@ modules (`sportanalytics::running`, `sportanalytics::cycling`); the crate root
 does not re-export `Error`. Sport helpers return `running::Error` /
 `cycling::Error`.
 
-## Install
+## 📦 Install
 
 ```bash
 cargo add sportanalytics
@@ -41,9 +41,10 @@ use sportanalytics::running::*;
 // or: use sportanalytics::cycling::*;
 ```
 
-Running items are also available from `sportanalytics::prelude` (running-only).
-Sport functions return `running::Error` / `cycling::Error` (no crate-root
-`Error`). Mix sports with `Box<dyn std::error::Error>`.
+- Running items are also available from `sportanalytics::prelude` (running-only).
+- Sport functions return `running::Error` / `cycling::Error` (no crate-root
+  `Error`).
+- Mix sports with `Box<dyn std::error::Error>`.
 
 ## 🏃‍➡️ Running
 
@@ -77,6 +78,8 @@ fn main() -> Result<(), sportanalytics::running::Error> {
 - Distances accept kilometres or international miles (`Distance::from_km`,
   `Distance::from_miles`, or `"8mi".parse::<Distance>()`). Internal math is
   in metres and seconds.
+
+Run Examples:
 
 ```text
 cargo run --example from_5k      # examples/running/from_5k.rs
@@ -178,12 +181,16 @@ fn main() -> Result<(), sportanalytics::cycling::Error> {
 }
 ```
 
+Run Examples:
+
 ```text
 cargo run --example from_20min   # examples/cycling/from_20min.rs
 cargo run --example from_tt      # examples/cycling/from_tt.rs
 ```
 
 ### Road speed from power
+
+Example:
 
 ```rust
 use sportanalytics::cycling::{speed_for_power, time_for_distance, Environment, Mass, Power, RiderBike};
@@ -214,14 +221,14 @@ FTP is an operational training anchor, not laboratory lactate threshold.
 Estimated VO2 is a field estimate, not gas analysis. Age helpers use ages
 **15..=90** and are not USATF/VTTA age grading.
 
-## Builds
+## 🛠️ Builds
 
 - Default builds have no crate dependencies (`std` only). Enable `serde` for
   `Serialize`/`Deserialize`.
 - Crate 0.2 ships **running** and **cycling**. Further sports should be sibling
   modules; do not dump new sports onto the crate root or into `prelude`.
 
-## Attribution
+## 📋 Attribution
 
 The running and cycling modules implement published equations. They are not
 copied from another crate or from copyrighted pace/power charts.
@@ -258,16 +265,16 @@ copied from another crate or from copyrighted pace/power charts.
 - **Age factor:** trained-endurance decline approximation (linear ~0.5%/year after
   35; Tanaka & Seals-style); sex unused; not VTTA/CTT/WMA tables.
 
-## MSRV
+## 🦀 MSRV
 
 Rust **1.71** (edition 2021).
 
-## Contributing
+## ✍ Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). This project follows the
 [Rust Code of Conduct](CODE_OF_CONDUCT.md).
 
-## License
+## 📜 License
 
 MIT for crate code. Embedded USATF MLDR 2025 age-grade table data is CC0-1.0
 (Alan Jones / Tom Bernhard).
