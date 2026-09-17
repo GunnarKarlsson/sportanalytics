@@ -20,8 +20,8 @@
 
 use std::fmt;
 
+use super::Error;
 use super::{Distance, RaceTime};
-use crate::Error;
 
 /// Newtype for a Daniels VDOT (effective VO2max) value in ml/kg/min.
 ///
@@ -244,7 +244,7 @@ mod tests {
     use std::path::PathBuf;
 
     fn fixtures_dir() -> PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/running")
     }
 
     fn parse_distance(name: &str) -> Distance {
@@ -278,7 +278,7 @@ mod tests {
         Distance::Marathon,
     ];
 
-    /// Regenerate `tests/fixtures/vdot_*.csv` from the 1979 equations.
+    /// Regenerate `tests/fixtures/running/vdot_*.csv` from the 1979 equations.
     ///
     /// ```text
     /// cargo test -p sportanalytics --lib running::vo2::tests::generate_vdot_fixtures -- --ignored
@@ -286,7 +286,7 @@ mod tests {
     ///
     /// Output must be byte-stable when seconds agree to 1e-9 before rounding.
     #[test]
-    #[ignore = "run explicitly to regenerate tests/fixtures/vdot_*.csv"]
+    #[ignore = "run explicitly to regenerate tests/fixtures/running/vdot_*.csv"]
     fn generate_vdot_fixtures() {
         let dir = fixtures_dir();
         fs::create_dir_all(&dir).unwrap();

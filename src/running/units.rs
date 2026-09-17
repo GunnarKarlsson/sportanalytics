@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use crate::Error;
+use super::Error;
 
 /// International mile in metres.
 pub const METERS_PER_MILE: f64 = 1609.344;

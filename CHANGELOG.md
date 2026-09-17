@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-17
+
+### Added
+
+- `sportanalytics::cycling`: Effort, FTP protocols, Coggan zones, W/kg,
+  2-parameter critical power, power–duration prediction, ACSM relative VO2
+  (plus Hawley–Noakes absolute).
+- Martin 1998 power–speed, VAM, constant-grade course time, `air_density` /
+  `Environment::from_altitude_celsius`.
+- Age-factor helper for FTP (trained-endurance decline curve; no official tables).
+- `examples/cycling/from_20min.rs`, `examples/cycling/from_tt.rs`.
+- Cycling fixtures under `tests/fixtures/cycling/`; running fixtures under
+  `tests/fixtures/running/`.
+- Examples live under `examples/running/` and `examples/cycling/` (Cargo
+  `[[example]]` paths; `cargo run --example <name>` unchanged).
+
+### Changed
+
+- Removed `sportanalytics::Error` / `SharedError`. `running::Error` and
+  `cycling::Error` are complete and independent; each sport constructs only its
+  own variants (no `Shared` wrapper, no crate-root error type).
+- `AgeOutOfRange { min, max }` lives on each sport that has age helpers
+  (running 5–99, cycling 15–90).
+- Cycling variants (`InvalidPower`, `InvalidMass`, `InvalidWork`,
+  `InsufficientEfforts`, `DurationOutOfModelRange`, `UnsolvablePowerDuration`,
+  `InvalidPhysicsParam`, `UnsolvableSpeed`) live on `cycling::Error`.
+- Serde: no root error; sport enums no longer have a `Shared` arm.
+- `prelude` does not re-export `Error` (running grab-bag only).
+- Mix sports with `Box<dyn std::error::Error>` (already implemented on both
+  sport enums).
+- Cycling relative VO2 is attributed to ACSM (`10.8 × W/kg + 7`), not Hawley &
+  Noakes; Hawley–Noakes 1992 is the separate absolute L/min equation.
+- `predict_power` takes an effort slice; redundant prediction aliases and
+  physics/factor constant dumps are no longer re-exported from `cycling`.
+- FTP% single-effort mapping requires a protocol duration window (no nearest
+  of 5/20/60 heuristics). EightMin (6–10 min) wins over MAP; auto-MAP is
+  3–6 min exclusive so 8 min @ 300 W → 270 W, not 250 W.
+- Age-factor decline after 35 is linear 0.5%/year (matches documented rate).
+
 ## [0.1.1] - 2026-09-17
 
 ### Fixed
@@ -66,7 +105,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with label `"custom"` (no `Box::leak`; in-process custom labels are not
   preserved across serde).
 - `predict_times` no longer accepts unused `age` / `gender` arguments. Age adjustment is `age_grade` / `age_equivalent`.
-- Crate root re-exports only `Error`. Running types live under `sportanalytics::running` (or `sportanalytics::prelude`).
+- Crate root re-exported only `Error` (removed in 0.2.0). Running types lived
+  under `sportanalytics::running` (or `sportanalytics::prelude`).
 - `RaceTime::from_hms` rejects minutes or seconds ≥ 60 (`InvalidHms`).
 - `time_from_vdot` returns `Result` (`UnsolvableTime`) instead of clamping to the 2–12 min/km bisection bracket. `predict_times` and `predict_daniels_and_cameron` do the same.
 - `Gender` is documented as WMA/USATF male/female table standards, not a general gender model.

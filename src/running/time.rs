@@ -1,8 +1,8 @@
 use std::fmt;
 use std::time::Duration;
 
+use super::Error;
 use super::{Distance, Pace};
-use crate::Error;
 
 /// A single race result: a distance and a positive finish time.
 #[derive(Debug, Clone, Copy, PartialEq)]

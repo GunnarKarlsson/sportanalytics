@@ -3,7 +3,7 @@
 use super::mldr_2025::{EventTable, EVENTS, MAX_AGE, MIN_AGE};
 use super::{AgeGradeTable, Gender};
 use crate::running::Distance;
-use crate::Error;
+use crate::running::Error;
 
 /// Resolved age factor and age standard for one lookup.
 #[derive(Debug, Clone, Copy)]
@@ -18,7 +18,10 @@ pub(crate) fn check_age(age: u8) -> Result<(), Error> {
     if (MIN_AGE..=MAX_AGE).contains(&age) {
         Ok(())
     } else {
-        Err(Error::AgeOutOfRange)
+        Err(Error::AgeOutOfRange {
+            min: MIN_AGE as u16,
+            max: MAX_AGE as u16,
+        })
     }
 }
 

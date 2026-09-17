@@ -15,7 +15,8 @@
 //! time_at_age_n   = actual_time × age_factor(current) / age_factor(n)
 //! ```
 //!
-//! Ages must be in **5..=99**. Distances outside the official event span (about
+//! Ages must be in **5..=99** ([`Error::AgeOutOfRange`] `{ min: 5, max: 99 }`
+//! otherwise). Distances outside the official event span (about
 //! 1 mile through 200 km), and road 3K (no 2025 file), return
 //! [`Error::UnsupportedAgeGradeDistance`].
 //! Off-grid distances interpolate **age standards** in log-distance between the
@@ -24,8 +25,8 @@
 use std::fmt;
 
 use super::time::format_hms;
+use super::Error;
 use super::{Distance, RaceTime};
-use crate::Error;
 
 mod mldr_2025;
 mod table;
@@ -174,7 +175,7 @@ impl PerformanceLevel {
 ///
 /// ```
 /// use sportanalytics::running::{open_standard_secs, Distance, Gender};
-/// use sportanalytics::Error;
+/// use sportanalytics::running::Error;
 ///
 /// assert_eq!(
 ///     open_standard_secs(Distance::Marathon, Gender::Male).unwrap(),
@@ -203,12 +204,12 @@ pub fn open_standard_secs_with(
 /// Age factor in `(0, 1]` for `age`, `gender`, and `distance` from the default
 /// table ([`AgeGradeTable::UsatfMldr2025`]).
 ///
-/// Returns [`Error::AgeOutOfRange`] outside 5..=99, or
+/// Returns [`Error::AgeOutOfRange`] `{ min: 5, max: 99 }` outside 5..=99, or
 /// [`Error::UnsupportedAgeGradeDistance`] for road 3K / out-of-span distances.
 ///
 /// ```
 /// use sportanalytics::running::{age_factor, Distance, Gender};
-/// use sportanalytics::Error;
+/// use sportanalytics::running::Error;
 ///
 /// let f = age_factor(28, Gender::Male, Distance::FiveK).unwrap();
 /// assert!((f - 1.0).abs() < 1e-9);
@@ -233,13 +234,14 @@ pub fn age_factor_with(
 
 /// Age-grade a performance with the default USATF MLDR 2025 table.
 ///
-/// Returns [`Result`]. Ages outside 5..=99 yield [`Error::AgeOutOfRange`].
+/// Returns [`Result`]. Ages outside 5..=99 yield
+/// [`Error::AgeOutOfRange`] `{ min: 5, max: 99 }`.
 /// [`Distance::ThreeK`] (and other unsupported distances) yield
 /// [`Error::UnsupportedAgeGradeDistance`].
 ///
 /// ```
 /// use sportanalytics::running::{age_grade, Distance, Gender, RaceTime};
-/// use sportanalytics::Error;
+/// use sportanalytics::running::Error;
 ///
 /// let five = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
 /// let ag = age_grade(five, 42, Gender::Male, Some(25)).unwrap();
@@ -333,8 +335,8 @@ pub fn age_equivalent_with(
 
 #[cfg(test)]
 mod tests {
+    use super::Error;
     use super::*;
-    use crate::Error;
 
     #[test]
     fn open_headers_match_generated_table() {
@@ -366,20 +368,20 @@ mod tests {
     fn age_out_of_range() {
         assert_eq!(
             age_factor(4, Gender::Male, Distance::FiveK),
-            Err(Error::AgeOutOfRange)
+            Err(Error::AgeOutOfRange { min: 5, max: 99 })
         );
         assert_eq!(
             age_factor(100, Gender::Male, Distance::FiveK),
-            Err(Error::AgeOutOfRange)
+            Err(Error::AgeOutOfRange { min: 5, max: 99 })
         );
         let race = RaceTime::from_hms(Distance::FiveK, 0, 20, 0).unwrap();
         assert_eq!(
             age_grade(race, 4, Gender::Male, None),
-            Err(Error::AgeOutOfRange)
+            Err(Error::AgeOutOfRange { min: 5, max: 99 })
         );
         assert_eq!(
             age_grade(race, 100, Gender::Male, None),
-            Err(Error::AgeOutOfRange)
+            Err(Error::AgeOutOfRange { min: 5, max: 99 })
         );
     }
 

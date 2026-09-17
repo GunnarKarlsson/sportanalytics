@@ -1,0 +1,5 @@
+protocol,watts,seconds,ftp
+twenty,280,1200,266
+sixty,250,3600,250
+eight,300,480,270
+ramp,360,300,300

@@ -27,9 +27,9 @@
 //!   ([`METERS_PER_MILE`] m) at the I/O edge only.
 //! - [`Vdot`] — newtype around a positive finite Daniels VDOT. Cameron/Riegel
 //!   times are *not* VDOT values.
-//! - [`crate::Error`] — `NonPositiveTime`, `EmptyRaces`, `InvalidVdot`,
-//!   `InvalidDistance`, `UnrecognizedDistance`, `InvalidHms`, `InvalidPace`,
-//!   `UnsolvableTime`, `AgeOutOfRange`, `UnsupportedAgeGradeDistance`.
+//! - [`Error`] — every failure running constructors and helpers can return
+//!   (`NonPositiveTime`, `InvalidHms`, `AgeOutOfRange { min, max }`, and model
+//!   variants).
 //!
 //! Internal math stays in metres and seconds. Kilometre vs mile appears only
 //! when constructing or displaying distances and paces.
@@ -53,8 +53,8 @@
 //! # Age grading
 //!
 //! [`age_grade()`], [`age_factor()`], [`age_equivalent()`], and [`open_standard_secs()`]
-//! return [`Result`](crate::Error). Ages are **5..=99** (`AgeOutOfRange`
-//! otherwise). Road 3K is unsupported (`UnsupportedAgeGradeDistance`). Off-grid
+//! return [`Result`](Error). Ages are **5..=99** ([`Error::AgeOutOfRange`]
+//! `{ min: 5, max: 99 }` otherwise). Road 3K is unsupported (`UnsupportedAgeGradeDistance`). Off-grid
 //! distances interpolate age standards in log-distance between neighbouring
 //! official events. [`Gender`] selects the male/female table columns.
 //! [`PerformanceLevel`] bands are informal community labels, not official WMA
@@ -64,10 +64,12 @@
 //! # Examples
 //!
 //! `cargo run --example from_5k` (VDOT, predictions, zones) and
-//! `cargo run --example age_grade` (42-year-old 5K).
+//! `cargo run --example age_grade` (42-year-old 5K). Sources live under
+//! `examples/running/`.
 
 mod age_grade;
 mod distance;
+mod error;
 mod predict;
 mod time;
 mod units;
@@ -80,6 +82,7 @@ pub use age_grade::{
     PerformanceLevel,
 };
 pub use distance::Distance;
+pub use error::Error;
 pub use predict::{
     cameron, predict_daniels_and_cameron, predict_times, riegel, riegel_with_exponent,
     DualPredictedTimes, PredictedTimes, PredictionModel, RIEGEL_EXPONENT,
