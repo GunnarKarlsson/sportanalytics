@@ -64,7 +64,8 @@
 //! # Examples
 //!
 //! `cargo run --example from_5k` (VDOT, predictions, zones) and
-//! `cargo run --example age_grade` (42-year-old 5K).
+//! `cargo run --example age_grade` (42-year-old 5K). Sources live under
+//! `examples/running/`.
 
 mod age_grade;
 mod distance;
