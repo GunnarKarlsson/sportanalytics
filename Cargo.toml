@@ -10,7 +10,7 @@ readme = "README.md"
 repository = "https://github.com/GunnarKarlsson/sportanalytics"
 homepage = "https://github.com/GunnarKarlsson/sportanalytics"
 documentation = "https://docs.rs/sportanalytics"
-keywords = ["running", "cycling", "vo2max", "vdot", "age-grade", "race-prediction", "ftp", "critical-power", "vdot"]
+keywords = ["running", "cycling", "vdot", "ftp", "age-grade"]
 categories = ["science"]
 include = [
     "src/**/*",
