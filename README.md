@@ -5,13 +5,13 @@
 [![MSRV](https://img.shields.io/badge/MSRV-1.71+-blue.svg)](https://blog.rust-lang.org/2023/07/13/Rust-1.71.0/)
 [![Rust](https://img.shields.io/badge/Rust-edition%202021-orange.svg)](https://doc.rust-lang.org/edition-guide/rust-2021/index.html)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![CI](https://github.com/GunnarKarlsson/sports-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/GunnarKarlsson/sports-analytics/actions)
+[![CI](https://github.com/GunnarKarlsson/sportanalytics/actions/workflows/ci.yml/badge.svg)](https://github.com/GunnarKarlsson/sportanalytics/actions)
 
 Running analytics in Rust: Daniels–Gilbert VDOT (effective VO2max), race-time
 prediction, training zones, and USATF MLDR 2025 road age grading.
 
 The published crate name is **`sportanalytics`**. This repository is
-`sports-analytics`. The layout is modular so other sports can be added later;
+`sportanalytics`. The layout is modular so other sports can be added later;
 0.1 only ships **running**.
 
 ## Install
