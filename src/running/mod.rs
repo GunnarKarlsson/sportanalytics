@@ -52,8 +52,8 @@
 //! # Age grading
 //!
 //! [`age_grade()`], [`age_factor()`], [`age_equivalent()`], and [`open_standard_secs()`]
-//! return [`Result`](Error). Ages are **5..=99** (`AgeOutOfRange { min: 5, max: 99 }`
-//! otherwise). Road 3K is unsupported (`UnsupportedAgeGradeDistance`). Off-grid
+//! return [`Result`](Error). Ages are **5..=99** ([`crate::Error::AgeOutOfRange`]
+//! via [`Error::Shared`] otherwise). Road 3K is unsupported (`UnsupportedAgeGradeDistance`). Off-grid
 //! distances interpolate age standards in log-distance between neighbouring
 //! official events. [`Gender`] selects the male/female table columns.
 //! [`PerformanceLevel`] bands are informal community labels, not official WMA

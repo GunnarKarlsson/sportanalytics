@@ -55,7 +55,14 @@ impl fmt::Display for Error {
     }
 }
 
-impl StdError for Error {}
+impl StdError for Error {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        match self {
+            Self::Shared(e) => Some(e),
+            _ => None,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -113,6 +120,12 @@ mod tests {
     fn implements_std_error() {
         let err: Box<dyn StdError> = Box::new(Error::InvalidPower);
         assert!(err.source().is_none());
+        let shared = Error::Shared(crate::Error::InvalidHms);
+        assert!(shared.source().is_some());
+        assert_eq!(
+            shared.source().unwrap().to_string(),
+            crate::Error::InvalidHms.to_string()
+        );
     }
 
     #[test]

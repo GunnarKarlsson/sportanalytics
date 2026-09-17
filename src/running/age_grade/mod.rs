@@ -15,7 +15,8 @@
 //! time_at_age_n   = actual_time × age_factor(current) / age_factor(n)
 //! ```
 //!
-//! Ages must be in **5..=99**. Distances outside the official event span (about
+//! Ages must be in **5..=99** ([`crate::Error::AgeOutOfRange`] via
+//! [`Error::Shared`] otherwise). Distances outside the official event span (about
 //! 1 mile through 200 km), and road 3K (no 2025 file), return
 //! [`Error::UnsupportedAgeGradeDistance`].
 //! Off-grid distances interpolate **age standards** in log-distance between the
@@ -203,8 +204,8 @@ pub fn open_standard_secs_with(
 /// Age factor in `(0, 1]` for `age`, `gender`, and `distance` from the default
 /// table ([`AgeGradeTable::UsatfMldr2025`]).
 ///
-/// Returns [`crate::Error::AgeOutOfRange`] `{ min: 5, max: 99 }` (as
-/// [`Error::Shared`]) outside 5..=99, or [`Error::UnsupportedAgeGradeDistance`]
+/// Returns [`crate::Error::AgeOutOfRange`] `{ min: 5, max: 99 }` via
+/// [`Error::Shared`] outside 5..=99, or [`Error::UnsupportedAgeGradeDistance`]
 /// for road 3K / out-of-span distances.
 ///
 /// ```
