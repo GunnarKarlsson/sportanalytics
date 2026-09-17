@@ -1,6 +1,6 @@
 //! Sport analytics crate. Sports live in their own modules so more can be added later.
 //!
-//! Crate name: `sportanalytics`. Repository: `sports-analytics`.
+//! Crate name: `sportanalytics`. Repository: `sportanalytics`.
 //!
 //! Start with [`running`]. See `examples/from_5k.rs` and `examples/age_grade.rs`.
 //!

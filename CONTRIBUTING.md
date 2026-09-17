@@ -1,6 +1,6 @@
 # Contributing
 
-Crate name: `sportanalytics`. Repository: `sports-analytics`.
+Crate name: `sportanalytics`. Repository: `sportanalytics`.
 
 Bug reports and feature ideas: use the GitHub issue templates. Pull requests
 are welcome for tests, docs, and formula/API work that matches the crate’s
