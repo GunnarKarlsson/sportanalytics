@@ -19,8 +19,8 @@
 //! Enable the `serde` feature to serialize public types. Default builds stay
 //! dependency-free. New sports are **not** re-exported from the crate root.
 //!
-//! Root [`Error`] covers shared input checks only. Running and cycling helpers
-//! return [`running::Error`] and [`cycling::Error`].
+//! Sports return [`running::Error`] and [`cycling::Error`]. Mixed-sport binaries
+//! can use `Box<dyn std::error::Error>`.
 //!
 //! # Example
 //!
@@ -51,10 +51,7 @@
 #![warn(rust_2018_idioms, missing_debug_implementations)]
 
 pub mod cycling;
-mod error;
 pub mod running;
-
-pub use error::Error;
 
 /// Common running types and functions.
 ///

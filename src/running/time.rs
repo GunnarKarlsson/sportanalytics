@@ -14,10 +14,10 @@ pub struct RaceTime {
 impl RaceTime {
     /// Build a race result from a [`Duration`].
     ///
-    /// Returns [`crate::Error::NonPositiveTime`] when `time` is zero.
+    /// Returns [`Error::NonPositiveTime`] when `time` is zero.
     pub fn new(distance: Distance, time: Duration) -> Result<Self, Error> {
         if time.as_secs_f64() <= 0.0 {
-            return Err(crate::Error::NonPositiveTime.into());
+            return Err(Error::NonPositiveTime);
         }
         Ok(Self { distance, time })
     }
@@ -27,8 +27,8 @@ impl RaceTime {
     /// Minutes and seconds must be `< 60`. Use a larger hour value instead of
     /// overflowing minutes (`1, 30, 0` not `0, 90, 0`).
     ///
-    /// Returns [`crate::Error::InvalidHms`] when minutes or seconds are ≥ 60, and
-    /// [`crate::Error::NonPositiveTime`] when the total duration is zero.
+    /// Returns [`Error::InvalidHms`] when minutes or seconds are ≥ 60, and
+    /// [`Error::NonPositiveTime`] when the total duration is zero.
     ///
     /// ```
     /// use sportanalytics::running::{Distance, RaceTime};
@@ -43,7 +43,7 @@ impl RaceTime {
         seconds: u64,
     ) -> Result<Self, Error> {
         if minutes >= 60 || seconds >= 60 {
-            return Err(crate::Error::InvalidHms.into());
+            return Err(Error::InvalidHms);
         }
         Self::new(
             distance,
@@ -53,7 +53,7 @@ impl RaceTime {
 
     /// Build a race result from a finish time in seconds.
     ///
-    /// Returns [`crate::Error::NonPositiveTime`] when `seconds` is non-finite or not
+    /// Returns [`Error::NonPositiveTime`] when `seconds` is non-finite or not
     /// strictly positive.
     ///
     /// ```
@@ -64,7 +64,7 @@ impl RaceTime {
     /// ```
     pub fn from_secs(distance: Distance, seconds: f64) -> Result<Self, Error> {
         if !seconds.is_finite() || seconds <= 0.0 {
-            return Err(crate::Error::NonPositiveTime.into());
+            return Err(Error::NonPositiveTime);
         }
         Self::new(distance, Duration::from_secs_f64(seconds))
     }
@@ -209,27 +209,27 @@ mod tests {
     fn rejects_zero_and_non_finite_times() {
         assert_eq!(
             RaceTime::from_hms(Distance::TenK, 0, 0, 0),
-            Err(crate::Error::NonPositiveTime.into())
+            Err(Error::NonPositiveTime)
         );
         assert_eq!(
             RaceTime::from_secs(Distance::TenK, 0.0),
-            Err(crate::Error::NonPositiveTime.into())
+            Err(Error::NonPositiveTime)
         );
         assert_eq!(
             RaceTime::from_secs(Distance::TenK, -1.0),
-            Err(crate::Error::NonPositiveTime.into())
+            Err(Error::NonPositiveTime)
         );
         assert_eq!(
             RaceTime::from_secs(Distance::TenK, f64::NAN),
-            Err(crate::Error::NonPositiveTime.into())
+            Err(Error::NonPositiveTime)
         );
         assert_eq!(
             RaceTime::from_secs(Distance::TenK, f64::INFINITY),
-            Err(crate::Error::NonPositiveTime.into())
+            Err(Error::NonPositiveTime)
         );
         assert_eq!(
             RaceTime::new(Distance::FiveK, Duration::ZERO),
-            Err(crate::Error::NonPositiveTime.into())
+            Err(Error::NonPositiveTime)
         );
     }
 
@@ -237,11 +237,11 @@ mod tests {
     fn from_hms_rejects_overflow_minutes_and_seconds() {
         assert_eq!(
             RaceTime::from_hms(Distance::FiveK, 0, 90, 0),
-            Err(crate::Error::InvalidHms.into())
+            Err(Error::InvalidHms)
         );
         assert_eq!(
             RaceTime::from_hms(Distance::FiveK, 0, 0, 60),
-            Err(crate::Error::InvalidHms.into())
+            Err(Error::InvalidHms)
         );
         let ninety = RaceTime::from_hms(Distance::HalfMarathon, 1, 30, 0).unwrap();
         assert_eq!(ninety.seconds(), 5400.0);

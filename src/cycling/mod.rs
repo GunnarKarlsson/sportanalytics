@@ -32,8 +32,9 @@
 //!
 //! # Types
 //!
-//! - [`Error`] — cycling model failures, plus [`Error::Shared`] for common
-//!   input checks (`NonPositiveTime`, `InvalidHms`, `AgeOutOfRange { min, max }`).
+//! - [`Error`] — every failure cycling constructors and helpers can return
+//!   (`NonPositiveTime`, `InvalidHms`, `AgeOutOfRange { min, max }`, and model
+//!   variants).
 //!
 //! Runnable examples: `cargo run --example from_20min` and
 //! `cargo run --example from_tt` (sources under `examples/cycling/`).

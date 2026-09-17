@@ -18,11 +18,10 @@ pub(crate) fn check_age(age: u8) -> Result<(), Error> {
     if (MIN_AGE..=MAX_AGE).contains(&age) {
         Ok(())
     } else {
-        Err(crate::Error::AgeOutOfRange {
+        Err(Error::AgeOutOfRange {
             min: MIN_AGE as u16,
             max: MAX_AGE as u16,
-        }
-        .into())
+        })
     }
 }
 

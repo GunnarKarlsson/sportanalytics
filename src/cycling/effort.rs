@@ -212,10 +212,10 @@ pub struct Effort {
 impl Effort {
     /// Build from power and a positive [`Duration`].
     ///
-    /// Returns [`crate::Error::NonPositiveTime`] when `duration` is zero.
+    /// Returns [`Error::NonPositiveTime`] when `duration` is zero.
     pub fn new(power: Power, duration: Duration) -> Result<Self, Error> {
         if duration.as_secs_f64() <= 0.0 {
-            return Err(crate::Error::NonPositiveTime.into());
+            return Err(Error::NonPositiveTime);
         }
         Ok(Self { duration, power })
     }
@@ -231,14 +231,14 @@ impl Effort {
     /// ```
     pub fn from_watts_secs(watts: f64, seconds: f64) -> Result<Self, Error> {
         if !seconds.is_finite() || seconds <= 0.0 {
-            return Err(crate::Error::NonPositiveTime.into());
+            return Err(Error::NonPositiveTime);
         }
         Self::new(Power::new(watts)?, Duration::from_secs_f64(seconds))
     }
 
     /// Build from watts and hours / minutes / seconds.
     ///
-    /// Minutes and seconds must be `< 60` ([`crate::Error::InvalidHms`]).
+    /// Minutes and seconds must be `< 60` ([`Error::InvalidHms`]).
     ///
     /// ```
     /// use sportanalytics::cycling::Effort;
@@ -248,7 +248,7 @@ impl Effort {
     /// ```
     pub fn from_hms(watts: f64, hours: u64, minutes: u64, seconds: u64) -> Result<Self, Error> {
         if minutes >= 60 || seconds >= 60 {
-            return Err(crate::Error::InvalidHms.into());
+            return Err(Error::InvalidHms);
         }
         let total = hours * 3600 + minutes * 60 + seconds;
         Self::new(Power::new(watts)?, Duration::from_secs(total))
@@ -344,23 +344,17 @@ mod tests {
     fn effort_rejects_bad_inputs() {
         assert_eq!(
             Effort::from_watts_secs(280.0, 0.0),
-            Err(crate::Error::NonPositiveTime.into())
+            Err(Error::NonPositiveTime)
         );
         assert_eq!(
             Effort::from_watts_secs(0.0, 1200.0),
             Err(Error::InvalidPower)
         );
-        assert_eq!(
-            Effort::from_hms(280.0, 0, 90, 0),
-            Err(crate::Error::InvalidHms.into())
-        );
-        assert_eq!(
-            Effort::from_hms(280.0, 0, 0, 60),
-            Err(crate::Error::InvalidHms.into())
-        );
+        assert_eq!(Effort::from_hms(280.0, 0, 90, 0), Err(Error::InvalidHms));
+        assert_eq!(Effort::from_hms(280.0, 0, 0, 60), Err(Error::InvalidHms));
         assert_eq!(
             Effort::new(Power::new(100.0).unwrap(), Duration::ZERO),
-            Err(crate::Error::NonPositiveTime.into())
+            Err(Error::NonPositiveTime)
         );
     }
 

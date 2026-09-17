@@ -14,7 +14,8 @@ Martin road power–speed for cycling.
 
 The published crate name is **`sportanalytics`**. Sports live in sibling
 modules (`sportanalytics::running`, `sportanalytics::cycling`); the crate root
-re-exports shared `Error` only (sport helpers return `running::Error` / `cycling::Error`).
+does not re-export `Error`. Sport helpers return `running::Error` /
+`cycling::Error`.
 
 ## Install
 
@@ -41,8 +42,8 @@ use sportanalytics::running::*;
 ```
 
 Running items are also available from `sportanalytics::prelude` (running-only).
-The crate root re-exports shared `sportanalytics::Error` (input checks). Sport
-functions return `running::Error` / `cycling::Error`.
+Sport functions return `running::Error` / `cycling::Error` (no crate-root
+`Error`). Mix sports with `Box<dyn std::error::Error>`.
 
 ## Running
 

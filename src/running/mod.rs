@@ -27,8 +27,9 @@
 //!   ([`METERS_PER_MILE`] m) at the I/O edge only.
 //! - [`Vdot`] — newtype around a positive finite Daniels VDOT. Cameron/Riegel
 //!   times are *not* VDOT values.
-//! - [`Error`] — running model failures, plus [`Error::Shared`] for common
-//!   input checks (`NonPositiveTime`, `InvalidHms`, `AgeOutOfRange { min, max }`).
+//! - [`Error`] — every failure running constructors and helpers can return
+//!   (`NonPositiveTime`, `InvalidHms`, `AgeOutOfRange { min, max }`, and model
+//!   variants).
 //!
 //! Internal math stays in metres and seconds. Kilometre vs mile appears only
 //! when constructing or displaying distances and paces.
@@ -52,8 +53,8 @@
 //! # Age grading
 //!
 //! [`age_grade()`], [`age_factor()`], [`age_equivalent()`], and [`open_standard_secs()`]
-//! return [`Result`](Error). Ages are **5..=99** ([`crate::Error::AgeOutOfRange`]
-//! via [`Error::Shared`] otherwise). Road 3K is unsupported (`UnsupportedAgeGradeDistance`). Off-grid
+//! return [`Result`](Error). Ages are **5..=99** ([`Error::AgeOutOfRange`]
+//! `{ min: 5, max: 99 }` otherwise). Road 3K is unsupported (`UnsupportedAgeGradeDistance`). Off-grid
 //! distances interpolate age standards in log-distance between neighbouring
 //! official events. [`Gender`] selects the male/female table columns.
 //! [`PerformanceLevel`] bands are informal community labels, not official WMA

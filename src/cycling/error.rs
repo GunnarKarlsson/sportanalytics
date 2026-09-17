@@ -5,8 +5,17 @@ use std::fmt;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Error {
-    /// Shared input failure (time / HMS / age range).
-    Shared(crate::Error),
+    /// A duration was zero, negative, or non-finite.
+    NonPositiveTime,
+    /// `from_hms` was given minutes or seconds ≥ 60.
+    InvalidHms,
+    /// Age is outside the supported range for the helper that was called (15..=90).
+    AgeOutOfRange {
+        /// Inclusive lower bound for the helper.
+        min: u16,
+        /// Inclusive upper bound for the helper.
+        max: u16,
+    },
     /// Power was zero, negative, or non-finite.
     InvalidPower,
     /// Mass was zero, negative, or non-finite.
@@ -25,16 +34,14 @@ pub enum Error {
     UnsolvableSpeed,
 }
 
-impl From<crate::Error> for Error {
-    fn from(e: crate::Error) -> Self {
-        Self::Shared(e)
-    }
-}
-
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Shared(e) => fmt::Display::fmt(e, f),
+            Self::NonPositiveTime => f.write_str("duration must be positive"),
+            Self::InvalidHms => f.write_str("minutes and seconds must be less than 60"),
+            Self::AgeOutOfRange { min, max } => {
+                write!(f, "age is outside the supported range ({min}–{max})")
+            }
             Self::InvalidPower => f.write_str("power must be a positive finite number of watts"),
             Self::InvalidMass => f.write_str("mass must be a positive finite number of kilograms"),
             Self::InvalidWork => f.write_str("work must be a positive finite number of joules"),
@@ -57,10 +64,7 @@ impl fmt::Display for Error {
 
 impl StdError for Error {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        match self {
-            Self::Shared(e) => Some(e),
-            _ => None,
-        }
+        None
     }
 }
 
@@ -71,15 +75,15 @@ mod tests {
     #[test]
     fn display_messages_match_constructors() {
         assert_eq!(
-            Error::Shared(crate::Error::NonPositiveTime).to_string(),
+            Error::NonPositiveTime.to_string(),
             "duration must be positive"
         );
         assert_eq!(
-            Error::Shared(crate::Error::InvalidHms).to_string(),
+            Error::InvalidHms.to_string(),
             "minutes and seconds must be less than 60"
         );
         assert_eq!(
-            Error::Shared(crate::Error::AgeOutOfRange { min: 15, max: 90 }).to_string(),
+            Error::AgeOutOfRange { min: 15, max: 90 }.to_string(),
             "age is outside the supported range (15–90)"
         );
         assert_eq!(
@@ -120,18 +124,9 @@ mod tests {
     fn implements_std_error() {
         let err: Box<dyn StdError> = Box::new(Error::InvalidPower);
         assert!(err.source().is_none());
-        let shared = Error::Shared(crate::Error::InvalidHms);
-        assert!(shared.source().is_some());
-        assert_eq!(
-            shared.source().unwrap().to_string(),
-            crate::Error::InvalidHms.to_string()
-        );
-    }
-
-    #[test]
-    fn from_shared() {
-        let e: Error = crate::Error::InvalidHms.into();
-        assert_eq!(e, Error::Shared(crate::Error::InvalidHms));
+        assert!(Error::NonPositiveTime.source().is_none());
+        assert!(Error::InvalidHms.source().is_none());
+        assert!(Error::AgeOutOfRange { min: 15, max: 90 }.source().is_none());
     }
 
     #[cfg(feature = "serde")]
@@ -142,8 +137,8 @@ mod tests {
             serde_json::from_str::<Error>(&json).unwrap(),
             Error::InvalidPower
         );
-        let shared = Error::Shared(crate::Error::AgeOutOfRange { min: 15, max: 90 });
-        let shared_json = serde_json::to_string(&shared).unwrap();
-        assert_eq!(serde_json::from_str::<Error>(&shared_json).unwrap(), shared);
+        let age = Error::AgeOutOfRange { min: 15, max: 90 };
+        let age_json = serde_json::to_string(&age).unwrap();
+        assert_eq!(serde_json::from_str::<Error>(&age_json).unwrap(), age);
     }
 }
