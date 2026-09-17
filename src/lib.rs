@@ -2,7 +2,7 @@
 //!
 //! Crate name: `sportanalytics`. Repository: `sportanalytics`.
 //!
-//! Version **0.2** ships [`running`] and [`cycling`]. See
+//! Version **0.2.0** ships [`running`] and [`cycling`]. See
 //! `examples/running/from_5k.rs`, `examples/running/age_grade.rs`,
 //! `examples/cycling/from_20min.rs`, and `examples/cycling/from_tt.rs`.
 //!

@@ -7,10 +7,9 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/GunnarKarlsson/sportanalytics/actions/workflows/ci.yml/badge.svg)](https://github.com/GunnarKarlsson/sportanalytics/actions)
 
-Running and cycling analytics in Rust. **0.2** ships Daniels–Gilbert VDOT,
-race-time prediction, training zones, and USATF MLDR 2025 road age grading for
-running, plus FTP, critical power, Coggan zones, ACSM / Hawley–Noakes VO2, and
-Martin road power–speed for cycling.
+Running and cycling analytics in Rust. 
+
+**0.2.0** ships Daniels–Gilbert VDOT, race-time prediction, training zones, and USATF MLDR 2025 road age grading for running, plus FTP, critical power, Coggan zones, ACSM / Hawley–Noakes VO2, and Martin road power–speed for cycling.
 
 The published crate name is **`sportanalytics`**. Sports live in sibling
 modules (`sportanalytics::running`, `sportanalytics::cycling`); the crate root
@@ -225,7 +224,7 @@ Estimated VO2 is a field estimate, not gas analysis. Age helpers use ages
 
 - Default builds have no crate dependencies (`std` only). Enable `serde` for
   `Serialize`/`Deserialize`.
-- Crate 0.2 ships **running** and **cycling**. Further sports should be sibling
+- Crate 0.2.0 ships **running** and **cycling**. Further sports should be sibling
   modules; do not dump new sports onto the crate root or into `prelude`.
 
 ## 📋 Attribution

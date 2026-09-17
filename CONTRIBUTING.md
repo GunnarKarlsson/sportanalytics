@@ -4,7 +4,7 @@ Crate name: `sportanalytics`. Repository: `sportanalytics`.
 
 Bug reports and feature ideas: use the GitHub issue templates. Pull requests
 are welcome for tests, docs, and formula/API work that matches the crate’s
-scope (running + cycling sibling modules in 0.2; further sports as siblings later).
+scope (running + cycling sibling modules in 0.2.0; further sports as siblings later).
 Do not re-export sports from the crate root. Prelude stays running-only.
 
 This project follows the [Rust Code of Conduct](CODE_OF_CONDUCT.md).
