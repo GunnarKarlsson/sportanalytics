@@ -23,13 +23,13 @@ cargo add sportanalytics
 Default (no extra dependencies):
 ```toml
 [dependencies]
-sportanalytics = "0.1"
+sportanalytics = "0.1.1"
 ```
 
 Optional JSON support:
 ```toml
 [dependencies]
-sportanalytics = { version = "0.1", features = ["serde"] }
+sportanalytics = { version = "0.1.1", features = ["serde"] }
 ```
 
 Then in code:
@@ -155,7 +155,7 @@ Full types and formulas: [docs.rs/sportanalytics](https://docs.rs/sportanalytics
 ### Builds
 - Default builds have no crate dependencies (`std` only). Enable `serde` for
   `Serialize`/`Deserialize`.
-- Crate 0.1.0 does not include cycling, swimming, or other sports. Add those as
+- Crate 0.1.1 does not include cycling, swimming, or other sports. Add those as
   sibling modules later; do not dump new sports onto the crate root.
 
 ## Attribution

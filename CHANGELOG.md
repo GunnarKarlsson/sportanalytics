@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-17
+
+### Fixed
+
+- With `serde`, `Distance::Custom` no longer leaks labels via `Box::leak` when
+  deserializing.
+
+### Changed
+
+- Package `repository` / `homepage` URLs match the published crate name
+  (`sportanalytics`).
+- Crate package includes `data/age_grade/2025/SOURCE.txt`; raw RunScore table
+  files remain git-only provenance.
+- README and rustdoc clarifications (age-grade `Result` / ThreeK errors, badges,
+  list formatting).
+
 ## [0.1.0] - 2026-09-16
 
 ### Added

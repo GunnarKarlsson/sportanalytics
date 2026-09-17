@@ -36,7 +36,7 @@ body:
     id: version
     attributes:
       label: Crate version
-      placeholder: "0.1.0 or git SHA"
+      placeholder: "0.1.1 or git SHA"
     validations:
       required: true
 
