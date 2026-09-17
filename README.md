@@ -45,7 +45,7 @@ Running items are also available from `sportanalytics::prelude` (running-only).
 Sport functions return `running::Error` / `cycling::Error` (no crate-root
 `Error`). Mix sports with `Box<dyn std::error::Error>`.
 
-## Running
+## 🏃‍➡️ Running
 
 ```rust
 use sportanalytics::running::{
@@ -153,7 +153,7 @@ Full types and formulas: [docs.rs/sportanalytics](https://docs.rs/sportanalytics
 - Published Daniels *Running Formula* charts will differ by a few seconds/km
   from equation output.
 
-## Cycling
+## 🚴‍♀️ Cycling
 
 Example:
 
