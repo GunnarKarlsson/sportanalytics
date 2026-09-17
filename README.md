@@ -7,12 +7,15 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/GunnarKarlsson/sportanalytics/actions/workflows/ci.yml/badge.svg)](https://github.com/GunnarKarlsson/sportanalytics/actions)
 
-Running analytics in Rust: Daniels–Gilbert VDOT (effective VO2max), race-time
-prediction, training zones, and USATF MLDR 2025 road age grading.
+Running, cycling, and swimming analytics in Rust. **0.3** ships Daniels–Gilbert
+VDOT, race-time prediction, training zones, and USATF MLDR 2025 road age grading
+for running; FTP, critical power, Coggan zones, Hawley–Noakes VO2, and Martin
+road power–speed for cycling; and Critical Swim Speed (CSS), training zones,
+Riegel swimming prediction, and World Aquatics points for swimming.
 
-The published crate name is **`sportanalytics`**. This repository is
-`sportanalytics`. The layout is modular so other sports can be added later;
-0.1 only ships **running**.
+The published crate name is **`sportanalytics`**. Sports live in sibling
+modules (`sportanalytics::running`, `sportanalytics::cycling`,
+`sportanalytics::swimming`); the crate root re-exports only `Error`.
 
 ## Install
 
@@ -23,24 +26,26 @@ cargo add sportanalytics
 Default (no extra dependencies):
 ```toml
 [dependencies]
-sportanalytics = "0.1.1"
+sportanalytics = "0.3.0"
 ```
 
 Optional JSON support:
 ```toml
 [dependencies]
-sportanalytics = { version = "0.1.1", features = ["serde"] }
+sportanalytics = { version = "0.3.0", features = ["serde"] }
 ```
 
 Then in code:
 ```rust
 use sportanalytics::running::*;
+// or: use sportanalytics::cycling::*;
+// or: use sportanalytics::swimming::*;
 ```
 
-The same items are also available from `sportanalytics::prelude`.
+Running items are also available from `sportanalytics::prelude` (running-only).
 The crate root re-exports only `sportanalytics::Error`.
 
-## Quick start
+## Running
 
 ```rust
 use sportanalytics::running::{
@@ -73,14 +78,12 @@ fn main() -> Result<(), sportanalytics::Error> {
   `Distance::from_miles`, or `"8mi".parse::<Distance>()`). Internal math is
   in metres and seconds.
 
-Runnable example programs (also listed on docs.rs):
-
 ```text
-cargo run --example from_5k      # VDOT, predictions, training zones from a 20:00 5K
-cargo run --example age_grade    # 42-year-old 5K
+cargo run --example from_5k      # examples/running/from_5k.rs
+cargo run --example age_grade    # examples/running/age_grade.rs
 ```
 
-## Features
+### Features
 
 | Function | What data or formula it uses |
 |---|---|
@@ -132,10 +135,8 @@ fn main() -> Result<(), sportanalytics::Error> {
 
 Full types and formulas: [docs.rs/sportanalytics](https://docs.rs/sportanalytics).
 
+### Accuracy / non-goals
 
-## Accuracy / non-goals
-
-### Formulas
 - VDOT is *effective* VO2max (economy included). This crate implements the
   Daniels–Gilbert *Oxygen Power* (1979) equations, not the copyrighted printed
   lookup tables.
@@ -152,16 +153,123 @@ Full types and formulas: [docs.rs/sportanalytics](https://docs.rs/sportanalytics
 - Published Daniels *Running Formula* charts will differ by a few seconds/km
   from equation output.
 
-### Builds
+## Cycling
+
+```rust
+use sportanalytics::cycling::{
+    critical_power, ftp_from_20min, predict_power_from_cp, training_zones, Effort,
+};
+use std::time::Duration;
+
+fn main() -> Result<(), sportanalytics::Error> {
+    let twenty = Effort::from_watts_secs(280.0, 20.0 * 60.0)?;
+    let five = Effort::from_watts_secs(340.0, 5.0 * 60.0)?;
+
+    let ftp = ftp_from_20min(twenty)?;
+    let zones = training_zones(ftp);
+    let cp = critical_power(&[five, twenty])?;
+    let hour = predict_power_from_cp(cp.model, Duration::from_secs(3600))?;
+
+    println!("FTP {} W, CP {:.0} W, 60 min {:.0} W", ftp.watts(), cp.model.cp.watts(), hour.watts());
+    println!("Z2 {}", zones.endurance);
+    Ok(())
+}
+```
+
+```text
+cargo run --example from_20min   # examples/cycling/from_20min.rs
+cargo run --example from_tt      # examples/cycling/from_tt.rs
+```
+
+### Road speed from power
+
+```rust
+use sportanalytics::cycling::{speed_for_power, time_for_distance, Environment, Mass, Power, RiderBike};
+
+fn main() -> Result<(), sportanalytics::Error> {
+    let rider = RiderBike::road_default(Mass::from_kg(83.0)?);
+    let env = Environment::flat_calm_sea_level();
+    let v = speed_for_power(rider, env, Power::new(250.0)?)?;
+    let t = time_for_distance(rider, env, Power::new(250.0)?, 40_000.0)?;
+    println!("{:.1} km/h — 40 km in {:.0}s", v * 3.6, t.as_secs_f64());
+    Ok(())
+}
+```
+
+### Features
+
+| Function | What data or formula it uses |
+|---|---|
+| `ftp_from_20min` / `ftp_from_protocol` | Operational FTP from field protocols |
+| `critical_power` | Two-parameter CP + W′ |
+| `predict_power` / `predict_from_cp` | CP, %FTP curve, or power Riegel |
+| `training_zones` | Coggan Z1–Z7 + sweet spot (%FTP) |
+| `estimated_vo2max` | Hawley & Noakes MAP → VO2 field estimate |
+| `power_for_speed` / `speed_for_power` | Martin et al. 1998 power balance |
+| `age_equivalent_ftp` | Trained-endurance decline curve (not official tables) |
+
+FTP is an operational training anchor, not laboratory lactate threshold.
+Estimated VO2 is a field estimate, not gas analysis. Age helpers use ages
+**15..=90** and are not USATF/VTTA age grading.
+
+## Swimming
+
+```rust
+use sportanalytics::swimming::{
+    css_from_trials, predict_times, training_zones_from_css, wa_points_with,
+    Course, Event, PredictionModel, Stroke, SwimTime,
+};
+
+fn main() -> Result<(), sportanalytics::Error> {
+    let t200 = SwimTime::from_hms_cents(
+        Event::M200, Course::Scm, Stroke::Free, 0, 2, 30, 0,
+    )?;
+    let t400 = SwimTime::from_hms_cents(
+        Event::M400, Course::Scm, Stroke::Free, 0, 5, 20, 0,
+    )?;
+    let css = css_from_trials(t200, t400)?;
+    println!("CSS {:.1} s/100m", css.pace()?.sec_per_100m());
+    let zones = training_zones_from_css(css)?;
+    println!("threshold {}", zones.threshold);
+    let pred = predict_times(t400, PredictionModel::Riegel)?;
+    println!("Riegel 1500 {}", pred.formatted(Event::M1500)?);
+    println!("WA pts {}", wa_points_with(t400.seconds(), 220.0)?);
+    Ok(())
+}
+```
+
+```text
+cargo run --example from_400_200   # examples/swimming/from_400_200.rs
+```
+
+### Features
+
+| Function | What data or formula it uses |
+|---|---|
+| `css_from_trials` / `css_from_trials_n` | Wakayoshi 1992 slope of D vs T (CSS + ADC) |
+| `css_from_t30` | Distance covered in 1800 s |
+| `training_zones` / `training_zones_from_css` | CSS pace ± coaching offsets per 100 m |
+| `predict_times` / `predict_from_css` | CSS+ADC or Riegel `k = 1.03` |
+| `wa_points` / `wa_points_with` | World Aquatics `P = floor(1000 (B/T)^3)` |
+| `swolf` / `distance_per_stroke` | Length time + stroke count |
+
+Pace `Display` defaults to **`/100m`**. For yards, call
+`.display(LengthUnit::Per100y)`. Internal math is metres and seconds.
+
+## Builds
+
 - Default builds have no crate dependencies (`std` only). Enable `serde` for
   `Serialize`/`Deserialize`.
-- Crate 0.1.1 does not include cycling, swimming, or other sports. Add those as
-  sibling modules later; do not dump new sports onto the crate root.
+- Crate 0.3 ships **running**, **cycling**, and **swimming**. Further sports
+  should be sibling modules; do not dump new sports onto the crate root or into
+  `prelude`.
 
 ## Attribution
 
-The running module implements published equations. It is not copied from another
-crate or from copyrighted pace tables.
+The running, cycling, and swimming modules implement published equations. They
+are not copied from another crate or from copyrighted pace/power charts.
+
+### Running
 
 - **VDOT / equivalents / training intensities:** Jack Daniels and Jimmy Gilbert,
   *Oxygen Power* (1979): oxygen cost of running and sustainable %VO2max versus
@@ -178,6 +286,30 @@ crate or from copyrighted pace tables.
   by Alan Jones and Tom Bernhard (approved 2025-01-10). Source:
   [AlanLyttonJones/Age-Grade-Tables](https://github.com/AlanLyttonJones/Age-Grade-Tables)
   (`2025 Files/AgeGrade.zip`). Table data is **CC0-1.0**; the crate code is MIT.
+
+### Cycling
+
+- **FTP protocols / Coggan %FTP zones:** public coaching conventions (operational
+  threshold and training bands), not laboratory LT and not copyrighted power-profile
+  charts.
+- **Critical power:** two-parameter `P = CP + W′/t` linear fit.
+- **VO2 estimate:** Hawley & Noakes field MAP equation.
+- **Road power–speed:** Martin et al. 1998 cycling power balance (CdA, Crr, grade,
+  wind, drivetrain η).
+- **Age factor:** trained-endurance decline approximation (~0.5%/year after ~35);
+  not VTTA/CTT/WMA tables.
+
+### Swimming
+
+- **CSS / ADC:** Wakayoshi et al. (1992) critical swim speed — slope of distance
+  versus time for two (or N) maximal efforts. T-30 uses distance in 1800 s.
+- **Training zones:** coaching offsets in seconds per 100 m from CSS pace (not
+  copyrighted printed CSS charts).
+- **Riegel:** Pete Riegel (1981, *American Scientist*) swimming factor
+  `T2 = T1 * (D2/D1)^1.03` (not the running `1.06`).
+- **World Aquatics points:** public formula `P = floor(1000 * (B/T)^3)`. Base
+  times `B` change by year; pass `B` in or use a generated table — do not
+  hand-edit full grids.
 
 ## MSRV
 

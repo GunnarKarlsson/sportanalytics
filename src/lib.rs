@@ -2,19 +2,26 @@
 //!
 //! Crate name: `sportanalytics`. Repository: `sportanalytics`.
 //!
-//! Start with [`running`]. See `examples/from_5k.rs` and `examples/age_grade.rs`.
+//! Version **0.3** ships [`running`], [`cycling`], and [`swimming`]. See
+//! `examples/running/from_5k.rs`, `examples/running/age_grade.rs`,
+//! `examples/cycling/from_20min.rs`, `examples/cycling/from_tt.rs`, and
+//! `examples/swimming/from_400_200.rs`.
 //!
-//! Formulas: Daniels & Gilbert, *Oxygen Power* (1979) VDOT equations (not
+//! **Running:** Daniels & Gilbert, *Oxygen Power* (1979) VDOT equations (not
 //! copyrighted printed pace grids), Riegel (1977/1981, `k = 1.06`), and
 //! Cameron’s road-race fit. Training paces are inverted from those equations.
-//! Published *Running Formula* charts will differ by a few seconds/km. Age
-//! grading uses the official USATF MLDR 2025 road tables (not an approximation).
+//! Age grading uses the official USATF MLDR 2025 road tables.
 //!
-//! VDOT is *effective* VO2max (running economy included), not a laboratory test.
-//! A 20:00 5K is about VDOT 49.8; VDOT 50 predicts roughly 19:57 for 5K.
+//! **Cycling:** operational FTP protocols, two-parameter critical power, Coggan
+//! %FTP zones, Hawley–Noakes VO2 estimate, Martin 1998 power–speed, and a
+//! trained-endurance age-factor curve (not official age-grade tables).
+//!
+//! **Swimming:** Critical Swim Speed (Wakayoshi 1992), CSS training zones,
+//! Riegel swimming prediction (`k = 1.03`), and World Aquatics points
+//! (`P = floor(1000 (B/T)^3)`).
 //!
 //! Enable the `serde` feature to serialize public types. Default builds stay
-//! dependency-free.
+//! dependency-free. New sports are **not** re-exported from the crate root.
 //!
 //! # Example
 //!
@@ -44,14 +51,17 @@
 #![deny(missing_docs)]
 #![warn(rust_2018_idioms, missing_debug_implementations)]
 
+pub mod cycling;
 mod error;
 pub mod running;
+pub mod swimming;
 
 pub use error::Error;
 
-/// Common running types and functions.
+/// Common *running* types and functions.
 ///
-/// Prefer [`crate::running`] when adding another sport so names stay scoped.
+/// Prefer [`crate::running`], [`crate::cycling`], or [`crate::swimming`] so
+/// names stay scoped. Do not mix sports in this prelude.
 ///
 /// Pace and zone [`std::fmt::Display`] default to `/km`. For miles, call
 /// [`.display(LengthUnit::Mile)`](crate::running::Pace::display) (also on

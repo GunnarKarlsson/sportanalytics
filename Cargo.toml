@@ -1,16 +1,18 @@
 [package]
 name = "sportanalytics"
-version = "0.1.1"
+version = "0.3.0"
 edition = "2021"
 rust-version = "1.71"
 authors = ["Gunnar Karlsson <gunnar.h.karlsson@gmail.com>"]
-description = "Running analytics in Rust: Daniels VDOT, race-time prediction, training zones, and USATF MLDR 2025 age grading. Designed so other sports can be added later."
+description = """
+Sport analytics in Rust. Running: Daniels VDOT, race prediction, training zones, USATF MLDR 2025 age grading. Cycling: FTP, critical power, Coggan zones, Martin road power–speed. Swimming: CSS, training zones, race prediction, World Aquatics points. Designed so other sports can be added later.
+"""
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/GunnarKarlsson/sportanalytics"
 homepage = "https://github.com/GunnarKarlsson/sportanalytics"
 documentation = "https://docs.rs/sportanalytics"
-keywords = ["running", "vo2max", "vdot", "age-grade", "race-prediction"]
+keywords = ["running", "cycling", "swimming", "css", "vdot"]
 categories = ["science"]
 include = [
     "src/**/*",
@@ -36,3 +38,23 @@ serde = { version = "1", optional = true, default-features = false, features = [
 
 [dev-dependencies]
 serde_json = "1"
+
+[[example]]
+name = "from_5k"
+path = "examples/running/from_5k.rs"
+
+[[example]]
+name = "age_grade"
+path = "examples/running/age_grade.rs"
+
+[[example]]
+name = "from_20min"
+path = "examples/cycling/from_20min.rs"
+
+[[example]]
+name = "from_tt"
+path = "examples/cycling/from_tt.rs"
+
+[[example]]
+name = "from_400_200"
+path = "examples/swimming/from_400_200.rs"
