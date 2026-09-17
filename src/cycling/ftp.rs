@@ -8,7 +8,7 @@ use std::fmt;
 
 use super::critical_power::CriticalPower;
 use super::effort::{Effort, Power};
-use crate::Error;
+use super::Error;
 
 /// Functional threshold power in watts.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]

@@ -7,7 +7,7 @@ use sportanalytics::cycling::{
     Mass, Power, RiderBike, WattsPerKg,
 };
 
-fn main() -> Result<(), sportanalytics::Error> {
+fn main() -> Result<(), sportanalytics::cycling::Error> {
     let mass = Mass::from_kg(75.0 + 8.0)?; // rider + bike
     let rider = RiderBike::road_default(mass);
     let env = Environment::flat_calm_sea_level();

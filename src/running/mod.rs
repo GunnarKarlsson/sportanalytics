@@ -27,9 +27,8 @@
 //!   ([`METERS_PER_MILE`] m) at the I/O edge only.
 //! - [`Vdot`] — newtype around a positive finite Daniels VDOT. Cameron/Riegel
 //!   times are *not* VDOT values.
-//! - [`crate::Error`] — `NonPositiveTime`, `EmptyRaces`, `InvalidVdot`,
-//!   `InvalidDistance`, `UnrecognizedDistance`, `InvalidHms`, `InvalidPace`,
-//!   `UnsolvableTime`, `AgeOutOfRange`, `UnsupportedAgeGradeDistance`.
+//! - [`Error`] — running model failures, plus [`Error::Shared`] for common
+//!   input checks (`NonPositiveTime`, `InvalidHms`, `AgeOutOfRange { min, max }`).
 //!
 //! Internal math stays in metres and seconds. Kilometre vs mile appears only
 //! when constructing or displaying distances and paces.
@@ -53,7 +52,7 @@
 //! # Age grading
 //!
 //! [`age_grade()`], [`age_factor()`], [`age_equivalent()`], and [`open_standard_secs()`]
-//! return [`Result`](crate::Error). Ages are **5..=99** (`AgeOutOfRange`
+//! return [`Result`](Error). Ages are **5..=99** (`AgeOutOfRange { min: 5, max: 99 }`
 //! otherwise). Road 3K is unsupported (`UnsupportedAgeGradeDistance`). Off-grid
 //! distances interpolate age standards in log-distance between neighbouring
 //! official events. [`Gender`] selects the male/female table columns.
@@ -69,6 +68,7 @@
 
 mod age_grade;
 mod distance;
+mod error;
 mod predict;
 mod time;
 mod units;
@@ -81,6 +81,7 @@ pub use age_grade::{
     PerformanceLevel,
 };
 pub use distance::Distance;
+pub use error::Error;
 pub use predict::{
     cameron, predict_daniels_and_cameron, predict_times, riegel, riegel_with_exponent,
     DualPredictedTimes, PredictedTimes, PredictionModel, RIEGEL_EXPONENT,

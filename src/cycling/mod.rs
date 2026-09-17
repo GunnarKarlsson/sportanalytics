@@ -30,12 +30,18 @@
 //! assert!(zones.endurance.hard_end.watts() > zones.endurance.easy_end.watts());
 //! ```
 //!
+//! # Types
+//!
+//! - [`Error`] — cycling model failures, plus [`Error::Shared`] for common
+//!   input checks (`NonPositiveTime`, `InvalidHms`, `AgeOutOfRange { min, max }`).
+//!
 //! Runnable examples: `cargo run --example from_20min` and
 //! `cargo run --example from_tt` (sources under `examples/cycling/`).
 
 mod age;
 mod critical_power;
 mod effort;
+mod error;
 mod ftp;
 mod physics;
 mod predict;
@@ -47,6 +53,7 @@ pub use critical_power::{
     critical_power, predict_duration_from_cp, predict_power_from_cp, CpFit, CriticalPower,
 };
 pub use effort::{watts_per_kg, Effort, Mass, Power, WattsPerKg, Work};
+pub use error::Error;
 pub use ftp::{
     ftp_from_20min, ftp_from_60min, ftp_from_cp, ftp_from_map, ftp_from_protocol, Ftp, FtpProtocol,
 };

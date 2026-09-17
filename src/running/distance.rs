@@ -3,7 +3,7 @@ use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 
 use super::units::METERS_PER_MILE;
-use crate::Error;
+use super::Error;
 
 /// Road / track distance, including a caller-supplied custom length.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -230,7 +230,7 @@ mod distance_serde {
     }
 
     impl TryFrom<DistanceDto> for Distance {
-        type Error = crate::Error;
+        type Error = crate::running::Error;
 
         fn try_from(distance: DistanceDto) -> Result<Self, Self::Error> {
             match distance {

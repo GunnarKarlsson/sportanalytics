@@ -9,7 +9,7 @@ use std::fmt;
 use super::effort::{Mass, Power, WattsPerKg};
 use super::ftp::{ftp_from_protocol, Ftp, FtpProtocol};
 use super::Effort;
-use crate::Error;
+use super::Error;
 
 /// A power band with a softer and a harder edge (watts).
 #[derive(Debug, Clone, Copy, PartialEq)]

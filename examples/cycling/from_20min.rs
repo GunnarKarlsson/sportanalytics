@@ -7,7 +7,7 @@ use sportanalytics::cycling::{
     training_zones, Effort, Mass,
 };
 
-fn main() -> Result<(), sportanalytics::Error> {
+fn main() -> Result<(), sportanalytics::cycling::Error> {
     let twenty = Effort::from_watts_secs(280.0, 20.0 * 60.0)?;
     let five = Effort::from_watts_secs(340.0, 5.0 * 60.0)?;
     let mass = Mass::from_kg(75.0)?;

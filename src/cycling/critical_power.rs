@@ -14,7 +14,7 @@
 use std::time::Duration;
 
 use super::effort::{Effort, Power, Work};
-use crate::Error;
+use super::Error;
 
 /// Two-parameter critical-power model.
 #[derive(Debug, Clone, Copy, PartialEq)]

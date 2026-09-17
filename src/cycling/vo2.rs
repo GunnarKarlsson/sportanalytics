@@ -13,7 +13,7 @@ use std::fmt;
 
 use super::effort::{Mass, Power};
 use super::ftp::Ftp;
-use crate::Error;
+use super::Error;
 
 /// Estimated VO2max in ml·kg⁻¹·min⁻¹ from a field power test.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]

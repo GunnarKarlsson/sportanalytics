@@ -20,17 +20,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `examples/cycling/from_20min.rs`, `examples/cycling/from_tt.rs`.
 - Cycling fixtures under `tests/fixtures/cycling/`; running fixtures under
   `tests/fixtures/running/`.
-- Cycling error variants: `InvalidPower`, `InvalidMass`, `InvalidWork`,
-  `InsufficientEfforts`, `DurationOutOfModelRange`, `UnsolvablePowerDuration`,
-  `InvalidPhysicsParam`, `UnsolvableSpeed`.
 - Examples live under `examples/running/` and `examples/cycling/` (Cargo
   `[[example]]` paths; `cargo run --example <name>` unchanged).
 
 ### Changed
 
+- Split `sportanalytics::Error` into shared `Error` plus sport-local
+  `running::Error` and `cycling::Error`. Shared covers only
+  `NonPositiveTime`, `InvalidHms`, and `AgeOutOfRange { min, max }`.
+  Sport helpers return the sport error (`Shared` wraps crate `Error`).
+- `AgeOutOfRange` now carries `{ min, max }` (running 5–99, cycling 15–90).
+- Cycling variants (`InvalidPower`, `InvalidMass`, `InvalidWork`,
+  `InsufficientEfforts`, `DurationOutOfModelRange`, `UnsolvablePowerDuration`,
+  `InvalidPhysicsParam`, `UnsolvableSpeed`) live on `cycling::Error`.
+- Serde tags for the old flat error enum are gone; `Shared` changes wire shape.
+- `prelude` no longer re-exports `Error` (running grab-bag only).
 - Shared `Error` display strings are sport-neutral: `duration must be positive`,
-  `age is outside the supported range for this helper`,
-  `not enough maximal efforts for this model`.
+  `minutes and seconds must be less than 60`,
+  `age is outside the supported range (min–max)`.
 - Cycling relative VO2 is attributed to ACSM (`10.8 × W/kg + 7`), not Hawley &
   Noakes; Hawley–Noakes 1992 is the separate absolute L/min equation.
 - `predict_power` takes an effort slice; redundant prediction aliases and

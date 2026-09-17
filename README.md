@@ -14,7 +14,7 @@ Martin road power–speed for cycling.
 
 The published crate name is **`sportanalytics`**. Sports live in sibling
 modules (`sportanalytics::running`, `sportanalytics::cycling`); the crate root
-re-exports only `Error`.
+re-exports shared `Error` only (sport helpers return `running::Error` / `cycling::Error`).
 
 ## Install
 
@@ -41,7 +41,8 @@ use sportanalytics::running::*;
 ```
 
 Running items are also available from `sportanalytics::prelude` (running-only).
-The crate root re-exports only `sportanalytics::Error`.
+The crate root re-exports shared `sportanalytics::Error` (input checks). Sport
+functions return `running::Error` / `cycling::Error`.
 
 ## Running
 
@@ -50,7 +51,7 @@ use sportanalytics::running::{
     predict_times, training_zones, vdot, Distance, LengthUnit, PredictionModel, RaceTime,
 };
 
-fn main() -> Result<(), sportanalytics::Error> {
+fn main() -> Result<(), sportanalytics::running::Error> {
     // Use a 5K race time of 00:20:00 as example:
     let five_k_race_time = RaceTime::from_hms(Distance::FiveK, 0, 20, 0)?;
     println!("VDOT {:.1}", vdot(five_k_race_time).value());
@@ -106,7 +107,7 @@ use sportanalytics::running::{
     age_equivalent, age_grade, Distance, Gender, RaceTime,
 };
 
-fn main() -> Result<(), sportanalytics::Error> {
+fn main() -> Result<(), sportanalytics::running::Error> {
     let race_time = RaceTime::from_hms(Distance::FiveK, 0, 20, 0)?;
     let ag = age_grade(race_time, 42, Gender::Male, Some(25))?;
     println!(
@@ -161,7 +162,7 @@ use sportanalytics::cycling::{
 };
 use std::time::Duration;
 
-fn main() -> Result<(), sportanalytics::Error> {
+fn main() -> Result<(), sportanalytics::cycling::Error> {
     let twenty = Effort::from_watts_secs(280.0, 20.0 * 60.0)?;
     let five = Effort::from_watts_secs(340.0, 5.0 * 60.0)?;
 
@@ -186,7 +187,7 @@ cargo run --example from_tt      # examples/cycling/from_tt.rs
 ```rust
 use sportanalytics::cycling::{speed_for_power, time_for_distance, Environment, Mass, Power, RiderBike};
 
-fn main() -> Result<(), sportanalytics::Error> {
+fn main() -> Result<(), sportanalytics::cycling::Error> {
     let rider = RiderBike::road_default(Mass::from_kg(83.0)?);
     let env = Environment::flat_calm_sea_level();
     let v = speed_for_power(rider, env, Power::new(250.0)?)?;

@@ -33,8 +33,8 @@
 
 use super::time::format_hms;
 use super::vo2::{time_from_vdot, vdot};
+use super::Error;
 use super::{Distance, RaceTime, Vdot};
-use crate::Error;
 use std::fmt;
 
 /// Default Riegel fatigue exponent (`k = 1.06`).

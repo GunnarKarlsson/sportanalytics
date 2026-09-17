@@ -19,6 +19,9 @@
 //! Enable the `serde` feature to serialize public types. Default builds stay
 //! dependency-free. New sports are **not** re-exported from the crate root.
 //!
+//! Root [`Error`] covers shared input checks only. Running and cycling helpers
+//! return [`running::Error`] and [`cycling::Error`].
+//!
 //! # Example
 //!
 //! ```
@@ -69,5 +72,4 @@ pub mod prelude {
         DualPredictedTimes, Gender, LengthUnit, Pace, PaceRange, PerformanceLevel, PredictedTimes,
         PredictionModel, RaceTime, TrainingZones, Vdot, Vo2Estimate, METERS_PER_MILE,
     };
-    pub use crate::Error;
 }

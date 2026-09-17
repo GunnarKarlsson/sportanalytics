@@ -6,10 +6,11 @@
 //! ~5% per decade for aerobic power). See Tanaka & Seals and related
 //! endurance-aging literature. **Not** official age grading; sex is unused.
 //!
-//! Supported ages: **15..=90** ([`Error::AgeOutOfRange`] otherwise).
+//! Supported ages: **15..=90** ([`crate::Error::AgeOutOfRange`] via
+//! [`Error::Shared`] otherwise).
 
 use super::ftp::Ftp;
-use crate::Error;
+use super::Error;
 
 /// Age (years) at which the decline curve plateaus.
 pub const AGE_PLATEAU: u16 = 35;
@@ -23,7 +24,11 @@ fn check_age(age: u16) -> Result<(), Error> {
     if (AGE_LO..=AGE_HI).contains(&age) {
         Ok(())
     } else {
-        Err(Error::AgeOutOfRange)
+        Err(crate::Error::AgeOutOfRange {
+            min: AGE_LO,
+            max: AGE_HI,
+        }
+        .into())
     }
 }
 
@@ -36,7 +41,8 @@ fn decline(age: u16) -> f64 {
 /// Multiplicative factor mapping performance at `age` to `reference_age`.
 ///
 /// `factor = decline(age) / decline(reference_age)`. Ages outside 15..=90
-/// return [`Error::AgeOutOfRange`].
+/// return [`crate::Error::AgeOutOfRange`] `{ min: 15, max: 90 }` via
+/// [`Error::Shared`].
 pub fn age_factor(age: u16, reference_age: u16) -> Result<f64, Error> {
     check_age(age)?;
     check_age(reference_age)?;
@@ -93,7 +99,13 @@ mod tests {
     fn plateau_and_range() {
         assert!((age_factor(30, 35).unwrap() - 1.0).abs() < 1e-12);
         assert!((age_factor(55, 35).unwrap() - 0.9).abs() < 1e-12);
-        assert_eq!(age_factor(14, 35), Err(Error::AgeOutOfRange));
-        assert_eq!(age_factor(55, 91), Err(Error::AgeOutOfRange));
+        assert_eq!(
+            age_factor(14, 35),
+            Err(crate::Error::AgeOutOfRange { min: 15, max: 90 }.into())
+        );
+        assert_eq!(
+            age_factor(55, 91),
+            Err(crate::Error::AgeOutOfRange { min: 15, max: 90 }.into())
+        );
     }
 }

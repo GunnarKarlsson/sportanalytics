@@ -12,7 +12,7 @@ use std::time::Duration;
 use super::critical_power::{critical_power, predict_power_from_cp};
 use super::effort::{Effort, Power};
 use super::ftp::{ftp_from_map, ftp_from_protocol, Ftp, FtpProtocol};
-use crate::Error;
+use super::Error;
 
 /// Default power-side Riegel exponent (`k = 0.07`).
 pub const RIEGEL_POWER_EXPONENT: f64 = 0.07;

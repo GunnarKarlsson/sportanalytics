@@ -33,6 +33,9 @@ toolchain. Do not raise MSRV without a reason in the PR.
   published oxygen-cost equations.
 - Do not re-export new sports from the crate root. Add `src/<sport>/` and
   `sportanalytics::<sport>`.
+- Sport-specific failures go in `src/<sport>/error.rs` (`running::Error`,
+  `cycling::Error`, …). Do not add sport-only variants to crate-root `Error`
+  unless a second sport constructs the same failure for the same reason.
 - User-visible API or behavior changes: a `[Unreleased]` note in `CHANGELOG.md`.
 - Age grading: the published crate ships the generated table
   (`src/running/age_grade/mldr_2025.rs`); raw `data/age_grade/2025/AgeGrade.*`

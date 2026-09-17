@@ -20,8 +20,8 @@
 
 use std::fmt;
 
+use super::Error;
 use super::{Distance, RaceTime};
-use crate::Error;
 
 /// Newtype for a Daniels VDOT (effective VO2max) value in ml/kg/min.
 ///

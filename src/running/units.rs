@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use crate::Error;
+use super::Error;
 
 /// International mile in metres.
 pub const METERS_PER_MILE: f64 = 1609.344;
@@ -68,7 +68,7 @@ impl Pace {
 
     /// Pace from hours, minutes, and seconds per kilometre.
     ///
-    /// Minutes and seconds must be `< 60` ([`Error::InvalidHms`]). The total
+    /// Minutes and seconds must be `< 60` ([`crate::Error::InvalidHms`]). The total
     /// must be strictly positive ([`Error::InvalidPace`]).
     ///
     /// ```
@@ -83,7 +83,7 @@ impl Pace {
 
     /// Pace from hours, minutes, and seconds per international mile.
     ///
-    /// Minutes and seconds must be `< 60` ([`Error::InvalidHms`]). The total
+    /// Minutes and seconds must be `< 60` ([`crate::Error::InvalidHms`]). The total
     /// must be strictly positive ([`Error::InvalidPace`]).
     pub fn from_hms_per_mile(hours: u64, minutes: u64, seconds: u64) -> Result<Self, Error> {
         Self::per_mile(hms_to_secs(hours, minutes, seconds)?)
@@ -144,7 +144,7 @@ impl fmt::Display for PaceDisplay {
 
 fn hms_to_secs(hours: u64, minutes: u64, seconds: u64) -> Result<f64, Error> {
     if minutes >= 60 || seconds >= 60 {
-        return Err(Error::InvalidHms);
+        return Err(crate::Error::InvalidHms.into());
     }
     Ok((hours * 3600 + minutes * 60 + seconds) as f64)
 }
@@ -203,8 +203,14 @@ mod tests {
         assert_eq!(Pace::per_km(f64::NAN), Err(Error::InvalidPace));
         assert_eq!(Pace::per_mile(0.0), Err(Error::InvalidPace));
         assert_eq!(Pace::from_sec_per_meter(-1.0), Err(Error::InvalidPace));
-        assert_eq!(Pace::from_hms_per_km(0, 90, 0), Err(Error::InvalidHms));
-        assert_eq!(Pace::from_hms_per_mile(0, 0, 60), Err(Error::InvalidHms));
+        assert_eq!(
+            Pace::from_hms_per_km(0, 90, 0),
+            Err(crate::Error::InvalidHms.into())
+        );
+        assert_eq!(
+            Pace::from_hms_per_mile(0, 0, 60),
+            Err(crate::Error::InvalidHms.into())
+        );
         assert_eq!(Pace::from_hms_per_km(0, 0, 0), Err(Error::InvalidPace));
     }
 

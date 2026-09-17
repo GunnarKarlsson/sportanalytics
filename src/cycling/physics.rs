@@ -18,7 +18,7 @@
 use std::time::Duration;
 
 use super::effort::{Mass, Power, WattsPerKg};
-use crate::Error;
+use super::Error;
 
 /// Standard gravity (m/s²).
 pub const G: f64 = 9.80665;
