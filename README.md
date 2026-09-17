@@ -46,7 +46,7 @@ use sportanalytics::running::*;
   `Error`).
 - Mix sports with `Box<dyn std::error::Error>`.
 
-## 🏃‍➡️ Running
+## 🏃‍➡️ Running Metrics
 
 ```rust
 use sportanalytics::running::{
@@ -156,7 +156,7 @@ Full types and formulas: [docs.rs/sportanalytics](https://docs.rs/sportanalytics
 - Published Daniels *Running Formula* charts will differ by a few seconds/km
   from equation output.
 
-## 🚴‍♀️ Cycling
+## 🚴‍♀️ Cycling Metrics
 
 Example:
 
