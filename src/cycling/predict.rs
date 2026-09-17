@@ -62,9 +62,15 @@ fn ftp_percent_at(seconds: f64) -> Result<f64, Error> {
 
 /// Map a single effort to FTP only when duration sits in a protocol window.
 ///
-/// Windows: MAP / RampMap 3–8 min, TwentyMin 15–25 min, SixtyMin 45–75 min.
+/// Windows (no overlap):
+/// - MAP: **3–6 min exclusive of 6** → `FTP = P / 1.20`
+/// - EightMin: **6–10 min** → `FTP = 0.90 × P`
+/// - TwentyMin: 15–25 min → `FTP = 0.95 × P`
+/// - SixtyMin: 45–75 min → `FTP = P`
+///
 /// Durations outside those windows return [`Error::DurationOutOfModelRange`]
-/// (no nearest-neighbour heuristics).
+/// (no nearest-neighbour heuristics). Explicit [`FtpProtocol::RampMap`] still
+/// accepts 3–8 min when calling [`crate::cycling::ftp_from_protocol`] directly.
 fn ftp_from_single_effort(effort: Effort) -> Result<Ftp, Error> {
     let t = effort.seconds();
     if (15.0 * 60.0..=25.0 * 60.0).contains(&t) {
@@ -73,7 +79,11 @@ fn ftp_from_single_effort(effort: Effort) -> Result<Ftp, Error> {
     if (45.0 * 60.0..=75.0 * 60.0).contains(&t) {
         return ftp_from_protocol(effort, FtpProtocol::SixtyMin);
     }
-    if (3.0 * 60.0..=8.0 * 60.0).contains(&t) {
+    if (6.0 * 60.0..=10.0 * 60.0).contains(&t) {
+        return ftp_from_protocol(effort, FtpProtocol::EightMin);
+    }
+    // MAP / ~5 min: [3, 6) min — does not steal the EightMin band.
+    if (3.0 * 60.0..6.0 * 60.0).contains(&t) {
         return ftp_from_map(effort.power());
     }
     Err(Error::DurationOutOfModelRange)
@@ -262,6 +272,35 @@ mod tests {
             ),
             Err(Error::DurationOutOfModelRange)
         );
+    }
+
+    #[test]
+    fn eight_min_ftp_percent_matches_eight_min_protocol_not_map() {
+        use super::super::ftp::{ftp_from_protocol, FtpProtocol};
+        let eight = Effort::from_watts_secs(300.0, 480.0).unwrap();
+        let via_protocol = ftp_from_protocol(eight, FtpProtocol::EightMin).unwrap();
+        assert!((via_protocol.watts() - 270.0).abs() < 1e-9);
+        let hour = predict_power(
+            &[eight],
+            Duration::from_secs(3600),
+            PredictionModel::FtpPercent,
+        )
+        .unwrap();
+        // Must be 270 W (0.90×P), not 250 W (P/1.20 MAP path).
+        assert!((hour.watts() - 270.0).abs() < 0.5);
+    }
+
+    #[test]
+    fn five_min_still_uses_map_not_eight_min() {
+        let five = Effort::from_watts_secs(300.0, 300.0).unwrap();
+        let hour = predict_power(
+            &[five],
+            Duration::from_secs(3600),
+            PredictionModel::FtpPercent,
+        )
+        .unwrap();
+        // MAP: FTP = 300/1.20 = 250 → hour at 100% FTP.
+        assert!((hour.watts() - 250.0).abs() < 0.5);
     }
 
     #[test]

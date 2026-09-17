@@ -36,7 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `predict_power` takes an effort slice; redundant prediction aliases and
   physics/factor constant dumps are no longer re-exported from `cycling`.
 - FTP% single-effort mapping requires a protocol duration window (no nearest
-  of 5/20/60 heuristics).
+  of 5/20/60 heuristics). EightMin (6–10 min) wins over MAP; auto-MAP is
+  3–6 min exclusive so 8 min @ 300 W → 270 W, not 250 W.
 - Age-factor decline after 35 is linear 0.5%/year (matches documented rate).
 
 ## [0.1.1] - 2026-09-17

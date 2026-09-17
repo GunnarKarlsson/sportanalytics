@@ -1,3 +1,4 @@
 model,watts,seconds,target_seconds,expected_watts,watts2,seconds2
 ftp_percent,280,1200,3600,266,,
+ftp_percent,300,480,3600,270,,
 cp,310,300,3600,255,265,1200
