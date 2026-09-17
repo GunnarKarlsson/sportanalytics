@@ -29,7 +29,7 @@ fn main() -> Result<(), sportanalytics::Error> {
     println!("Predicted 60 min power: {}", hour);
 
     let vo2 = estimated_vo2max(five.power(), mass);
-    println!("Hawley–Noakes VO2 from 5 min MAP: {vo2}");
+    println!("ACSM VO2 from 5 min MAP: {vo2}");
 
     let eq = age_equivalent_ftp(ftp, 50, 35)?;
     println!("Age-equivalent FTP at 35 (from age 50): {eq}");

@@ -12,8 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `sportanalytics::cycling`: Effort, FTP protocols, Coggan zones, W/kg,
-  2-parameter critical power, power–duration prediction, Hawley–Noakes VO2.
-- Martin 1998 power–speed, VAM, constant-grade course time.
+  2-parameter critical power, power–duration prediction, ACSM relative VO2
+  (plus Hawley–Noakes absolute).
+- Martin 1998 power–speed, VAM, constant-grade course time, `air_density` /
+  `Environment::from_altitude_celsius`.
 - Age-factor helper for FTP (trained-endurance decline curve; no official tables).
 - `examples/cycling/from_20min.rs`, `examples/cycling/from_tt.rs`.
 - Cycling fixtures under `tests/fixtures/cycling/`; running fixtures under
@@ -23,6 +25,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `InvalidPhysicsParam`, `UnsolvableSpeed`.
 - Examples live under `examples/running/` and `examples/cycling/` (Cargo
   `[[example]]` paths; `cargo run --example <name>` unchanged).
+
+### Changed
+
+- Shared `Error` display strings are sport-neutral: `duration must be positive`,
+  `age is outside the supported range for this helper`,
+  `not enough maximal efforts for this model`.
+- Cycling relative VO2 is attributed to ACSM (`10.8 × W/kg + 7`), not Hawley &
+  Noakes; Hawley–Noakes 1992 is the separate absolute L/min equation.
+- `predict_power` takes an effort slice; redundant prediction aliases and
+  physics/factor constant dumps are no longer re-exported from `cycling`.
+- FTP% single-effort mapping requires a protocol duration window (no nearest
+  of 5/20/60 heuristics).
+- Age-factor decline after 35 is linear 0.5%/year (matches documented rate).
 
 ## [0.1.1] - 2026-09-17
 

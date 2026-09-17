@@ -1,9 +1,13 @@
-//! Field estimate of cycling VO2max (Hawley & Noakes).
+//! Field estimates of cycling VO2max from maximal aerobic power (MAP).
 //!
-//! `VO2 (ml·kg⁻¹·min⁻¹) = 10.8 × (MAP / m) + 7`
+//! **ACSM (relative):** `VO2 (ml·kg⁻¹·min⁻¹) = 10.8 × (MAP / m) + 7`
 //!
-//! This is a **field estimate** from maximal aerobic power, not laboratory gas
-//! analysis. If only FTP is known, MAP ≈ `1.20 × FTP` (extra error).
+//! **Hawley & Noakes 1992 (absolute):** `VO2 (L/min) = 0.01141 × Wpeak + 0.435`
+//! (convert to relative by ×1000 / mass_kg).
+//!
+//! These are **field estimates** from MAP / Wpeak, not laboratory gas analysis.
+//! If only FTP is known, MAP ≈ `1.20 × FTP` (extra error). Do not label the
+//! ACSM relative equation as Hawley–Noakes.
 
 use std::fmt;
 
@@ -49,14 +53,18 @@ impl<'de> serde::Deserialize<'de> for EstimatedVo2 {
     }
 }
 
-/// Hawley–Noakes slope coefficient (`10.8`).
-pub const HAWLEY_NOAKES_A: f64 = 10.8;
-/// Hawley–Noakes intercept (`7.0`).
-pub const HAWLEY_NOAKES_B: f64 = 7.0;
+/// ACSM relative VO2 slope (`10.8`).
+pub const ACSM_A: f64 = 10.8;
+/// ACSM relative VO2 intercept (`7.0`).
+pub const ACSM_B: f64 = 7.0;
+/// Hawley–Noakes 1992 absolute VO2 slope (`0.01141` L/min per watt).
+pub const HAWLEY_NOAKES_A: f64 = 0.01141;
+/// Hawley–Noakes 1992 absolute VO2 intercept (`0.435` L/min).
+pub const HAWLEY_NOAKES_B: f64 = 0.435;
 /// Approximate MAP from FTP: `MAP ≈ FTP_TO_MAP × FTP`.
 pub const FTP_TO_MAP: f64 = 1.20;
 
-/// Estimated VO2max from MAP and body mass (Hawley & Noakes).
+/// Estimated relative VO2max from MAP and body mass (ACSM cycling equation).
 ///
 /// ```
 /// use sportanalytics::cycling::{estimated_vo2max, Mass, Power};
@@ -65,21 +73,29 @@ pub const FTP_TO_MAP: f64 = 1.20;
 /// assert!((vo2.value() - 59.91).abs() < 0.05);
 /// ```
 pub fn estimated_vo2max(map: Power, mass: Mass) -> EstimatedVo2 {
-    EstimatedVo2(HAWLEY_NOAKES_A * (map.watts() / mass.kg()) + HAWLEY_NOAKES_B)
+    EstimatedVo2(ACSM_A * (map.watts() / mass.kg()) + ACSM_B)
 }
 
-/// Estimated VO2max from FTP, using `MAP ≈ 1.20 × FTP`.
+/// Estimated relative VO2max from MAP via Hawley & Noakes 1992 (absolute → relative).
+///
+/// `VO2_rel = 1000 × (0.01141 × Wpeak + 0.435) / mass_kg`.
+pub fn estimated_vo2max_hawley_noakes(map: Power, mass: Mass) -> EstimatedVo2 {
+    let l_min = HAWLEY_NOAKES_A * map.watts() + HAWLEY_NOAKES_B;
+    EstimatedVo2(l_min * 1000.0 / mass.kg())
+}
+
+/// Estimated VO2max from FTP, using `MAP ≈ 1.20 × FTP` and the ACSM equation.
 pub fn estimated_vo2max_from_ftp(ftp: Ftp, mass: Mass) -> EstimatedVo2 {
     let map = Power::new(FTP_TO_MAP * ftp.watts()).expect("FTP implies positive MAP");
     estimated_vo2max(map, mass)
 }
 
-/// Invert Hawley–Noakes: MAP from a target VO2 (ml/kg/min) and mass.
+/// Invert ACSM: MAP from a target relative VO2 (ml/kg/min) and mass.
 pub fn map_from_vo2(vo2_ml_kg_min: f64, mass: Mass) -> Result<Power, Error> {
-    if !vo2_ml_kg_min.is_finite() || vo2_ml_kg_min <= HAWLEY_NOAKES_B {
+    if !vo2_ml_kg_min.is_finite() || vo2_ml_kg_min <= ACSM_B {
         return Err(Error::InvalidPower);
     }
-    let map_w = (vo2_ml_kg_min - HAWLEY_NOAKES_B) / HAWLEY_NOAKES_A * mass.kg();
+    let map_w = (vo2_ml_kg_min - ACSM_B) / ACSM_A * mass.kg();
     Power::new(map_w)
 }
 
@@ -94,24 +110,31 @@ mod tests {
     }
 
     #[test]
-    fn fixture_hawley_noakes() {
+    fn fixture_vo2_equations() {
         let text = fs::read_to_string(fixtures_dir().join("vo2.csv")).unwrap();
         for (i, line) in text.lines().enumerate() {
             if i == 0 || line.trim().is_empty() {
                 continue;
             }
             let c: Vec<_> = line.split(',').collect();
-            let mass = Mass::from_kg(c[0].parse().unwrap()).unwrap();
-            let map = Power::new(c[1].parse().unwrap()).unwrap();
-            let expected: f64 = c[2].parse().unwrap();
-            let vo2 = estimated_vo2max(map, mass);
+            let equation = c[0];
+            let mass = Mass::from_kg(c[1].parse().unwrap()).unwrap();
+            let map = Power::new(c[2].parse().unwrap()).unwrap();
+            let expected: f64 = c[3].parse().unwrap();
+            let vo2 = match equation {
+                "acsm" => estimated_vo2max(map, mass),
+                "hawley" => estimated_vo2max_hawley_noakes(map, mass),
+                other => panic!("unknown equation {other}"),
+            };
             assert!(
                 (vo2.value() - expected).abs() < 0.05,
-                "row {i}: got {} want {expected}",
+                "row {i} ({equation}): got {} want {expected}",
                 vo2.value()
             );
-            let back = map_from_vo2(vo2.value(), mass).unwrap();
-            assert!((back.watts() - map.watts()).abs() < 0.05);
+            if equation == "acsm" {
+                let back = map_from_vo2(vo2.value(), mass).unwrap();
+                assert!((back.watts() - map.watts()).abs() < 0.05);
+            }
         }
     }
 

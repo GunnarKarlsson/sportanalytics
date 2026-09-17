@@ -5,7 +5,7 @@ use std::fmt;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Error {
-    /// A race time was zero, negative, or non-finite.
+    /// A duration was zero, negative, or non-finite.
     NonPositiveTime,
     /// [`crate::running::vo2max_from_races`] was called with an empty slice.
     EmptyRaces,
@@ -21,10 +21,10 @@ pub enum Error {
     InvalidPace,
     /// Daniels inversion found no finish time in the 2–12 min/km pace bracket.
     UnsolvableTime,
-    /// Age is outside the published table range (USATF MLDR 2025: 5..=99).
+    /// Age is outside the supported range for the helper that was called.
     ///
-    /// Cycling age helpers use a narrower window (15..=90); see
-    /// [`crate::cycling::age_factor`].
+    /// Running age grading uses 5..=99; cycling age helpers use 15..=90 — see
+    /// those modules' docs.
     AgeOutOfRange,
     /// Distance has no official age-grade row and cannot be interpolated
     /// (outside the official span, or an unsupported named distance such as 3K).
@@ -35,7 +35,7 @@ pub enum Error {
     InvalidMass,
     /// Work (joules) was zero, negative, or non-finite.
     InvalidWork,
-    /// Critical-power fit or CP prediction needs at least two maximal efforts.
+    /// Not enough maximal efforts for the requested model (e.g. CP needs ≥ 2).
     InsufficientEfforts,
     /// Effort or target duration is outside the model's valid window.
     DurationOutOfModelRange,
@@ -50,7 +50,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::NonPositiveTime => f.write_str("race time must be positive"),
+            Self::NonPositiveTime => f.write_str("duration must be positive"),
             Self::EmptyRaces => f.write_str("at least one race time is required"),
             Self::InvalidVdot => f.write_str("VDOT must be a positive finite value"),
             Self::InvalidDistance => {
@@ -63,7 +63,7 @@ impl fmt::Display for Error {
                 f.write_str("no finish time in the 2–12 min/km VDOT solver bracket")
             }
             Self::AgeOutOfRange => {
-                f.write_str("age must be within the published age-grade table range (5–99)")
+                f.write_str("age is outside the supported range for this helper")
             }
             Self::UnsupportedAgeGradeDistance => {
                 f.write_str("distance is not supported for age grading")
@@ -71,9 +71,7 @@ impl fmt::Display for Error {
             Self::InvalidPower => f.write_str("power must be a positive finite number of watts"),
             Self::InvalidMass => f.write_str("mass must be a positive finite number of kilograms"),
             Self::InvalidWork => f.write_str("work must be a positive finite number of joules"),
-            Self::InsufficientEfforts => {
-                f.write_str("at least two maximal efforts are required for critical power")
-            }
+            Self::InsufficientEfforts => f.write_str("not enough maximal efforts for this model"),
             Self::DurationOutOfModelRange => {
                 f.write_str("duration is outside the model's valid window")
             }
@@ -100,7 +98,7 @@ mod tests {
     fn display_messages_match_constructors() {
         assert_eq!(
             Error::NonPositiveTime.to_string(),
-            "race time must be positive"
+            "duration must be positive"
         );
         assert_eq!(
             Error::EmptyRaces.to_string(),
@@ -132,7 +130,7 @@ mod tests {
         );
         assert_eq!(
             Error::AgeOutOfRange.to_string(),
-            "age must be within the published age-grade table range (5–99)"
+            "age is outside the supported range for this helper"
         );
         assert_eq!(
             Error::UnsupportedAgeGradeDistance.to_string(),
@@ -152,7 +150,7 @@ mod tests {
         );
         assert_eq!(
             Error::InsufficientEfforts.to_string(),
-            "at least two maximal efforts are required for critical power"
+            "not enough maximal efforts for this model"
         );
         assert_eq!(
             Error::DurationOutOfModelRange.to_string(),

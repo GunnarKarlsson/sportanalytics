@@ -8,8 +8,12 @@
 //! ]
 //! ```
 //!
-//! `θ = arctan(grade)` (0.06 = 6%). Positive `wind_ms` is a headwind. No
-//! acceleration or variable-wind modelling.
+//! Steady-state only: **no** kinetic-energy / acceleration term, **no** drafting,
+//! **no** bearing / drivetrain split beyond η. `θ = arctan(grade)` (0.06 = 6%).
+//! Positive `wind_ms` is a headwind.
+//!
+//! [`Error::UnsolvableSpeed`] on downhill when required pedal power is ≤ 0 is
+//! intentional — this crate has no coasting model.
 
 use std::time::Duration;
 
@@ -123,6 +127,15 @@ impl Environment {
         }
     }
 
+    /// Flat, calm conditions with air density from altitude and temperature.
+    pub fn from_altitude_celsius(altitude_m: f64, temp_c: f64) -> Result<Self, Error> {
+        Ok(Self {
+            air_density: air_density(altitude_m, temp_c)?,
+            wind_ms: 0.0,
+            grade: 0.0,
+        })
+    }
+
     fn validate(self) -> Result<(), Error> {
         if !self.air_density.is_finite() || self.air_density <= 0.0 {
             return Err(Error::InvalidPhysicsParam);
@@ -135,6 +148,28 @@ impl Environment {
         }
         Ok(())
     }
+}
+
+/// Approximate air density (kg/m³) from altitude and Celsius temperature.
+///
+/// Uses ISA tropospheric pressure with an ideal-gas correction for `temp_c`.
+pub fn air_density(altitude_m: f64, temp_c: f64) -> Result<f64, Error> {
+    if !altitude_m.is_finite() || !(-500.0..=9000.0).contains(&altitude_m) {
+        return Err(Error::InvalidPhysicsParam);
+    }
+    if !temp_c.is_finite() || !(-60.0..=55.0).contains(&temp_c) {
+        return Err(Error::InvalidPhysicsParam);
+    }
+    let temp_k = temp_c + 273.15;
+    let pressure = 101_325.0 * (1.0 - 2.25577e-5 * altitude_m).powf(5.25588);
+    if !pressure.is_finite() || pressure <= 0.0 {
+        return Err(Error::InvalidPhysicsParam);
+    }
+    let rho = pressure / (287.05 * temp_k);
+    if !rho.is_finite() || rho <= 0.0 {
+        return Err(Error::InvalidPhysicsParam);
+    }
+    Ok(rho)
 }
 
 fn theta(grade: f64) -> f64 {
@@ -158,7 +193,7 @@ pub fn power_for_speed(rider: RiderBike, env: Environment, speed_m_s: f64) -> Re
     if !p_pedal.is_finite() {
         return Err(Error::InvalidPhysicsParam);
     }
-    // Downhill with low power demand can be ≤ 0; treat as unsolvable for Power.
+    // Downhill with low power demand can be ≤ 0; no coasting model.
     if p_pedal <= 0.0 {
         return Err(Error::UnsolvableSpeed);
     }
@@ -215,7 +250,10 @@ pub fn vam_m_per_hour(ascent_m: f64, duration: Duration) -> Result<f64, Error> {
     Ok(ascent_m / t * 3600.0)
 }
 
-/// Climb time from W/kg, grade, distance, and total mass (road defaults).
+/// Climb time from W/kg, grade, distance, and total mass.
+///
+/// Uses [`RiderBike::road_default`] (hoods CdA). Aero is small on steep grades
+/// but still wrong for a climb posture — prefer [`climb_time_with`] when you care.
 pub fn climb_time(
     watts_per_kg: WattsPerKg,
     grade: f64,
@@ -228,7 +266,17 @@ pub fn climb_time(
         wind_ms: 0.0,
         grade,
     };
-    let power = Power::new(watts_per_kg.value() * mass.kg())?;
+    climb_time_with(rider, env, watts_per_kg, distance_m)
+}
+
+/// Climb time with an explicit rider and environment (constant grade).
+pub fn climb_time_with(
+    rider: RiderBike,
+    env: Environment,
+    watts_per_kg: WattsPerKg,
+    distance_m: f64,
+) -> Result<Duration, Error> {
+    let power = Power::new(watts_per_kg.value() * rider.mass.kg())?;
     time_for_distance(rider, env, power, distance_m)
 }
 
@@ -306,6 +354,14 @@ mod tests {
         // Tiny power cannot overcome gravity at any speed in bracket.
         let result = speed_for_power(rider, env, Power::new(1.0).unwrap());
         assert_eq!(result, Err(Error::UnsolvableSpeed));
+    }
+
+    #[test]
+    fn air_density_sea_level_15c_near_isa() {
+        let rho = air_density(0.0, 15.0).unwrap();
+        assert!((rho - SEA_LEVEL_RHO).abs() < 0.01);
+        let env = Environment::from_altitude_celsius(0.0, 15.0).unwrap();
+        assert!((env.air_density - rho).abs() < 1e-12);
     }
 
     #[cfg(feature = "serde")]

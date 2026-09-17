@@ -6,8 +6,10 @@
 //! ```
 //!
 //! Fit with OLS on `(1/t, P)`: intercept = CP, slope = W′.
-//! Valid roughly **2–30 min** for the fit inputs; predictions up to 60 min.
-//! Do not use for 5 s sprints or multi-hour rides.
+//! The model is valid roughly **2–30 min** for fit inputs; this crate caps
+//! predictions at **60 min**. Hour power extrapolated from a short + medium
+//! pair (e.g. 5 min + 20 min) is **biased high** — treat that output as model
+//! math, not “true FTP”. Do not use for 5 s sprints or multi-hour rides.
 
 use std::time::Duration;
 
@@ -163,6 +165,10 @@ pub fn critical_power(efforts: &[Effort]) -> Result<CpFit, Error> {
 }
 
 /// Predict mean power for `duration` from a fitted CP model: `P = CP + W'/t`.
+///
+/// `duration` must be 2–60 min. Values near the hour, especially when CP was
+/// fitted from short efforts only, are model extrapolations biased high — not
+/// laboratory FTP.
 pub fn predict_power_from_cp(model: CriticalPower, duration: Duration) -> Result<Power, Error> {
     let t = duration.as_secs_f64();
     check_predict_duration(t)?;
@@ -248,5 +254,16 @@ mod tests {
             predict_duration_from_cp(model, Power::new(200.0).unwrap()),
             Err(Error::UnsolvablePowerDuration)
         );
+    }
+
+    #[test]
+    fn hour_from_five_and_twenty_is_model_output_not_ftp() {
+        // Perfect two-param pair: CP=250, W'=18000 → P(3600)=255 W.
+        // Documented as CP-model output, not “true FTP”.
+        let five = Effort::from_watts_secs(310.0, 300.0).unwrap();
+        let twenty = Effort::from_watts_secs(265.0, 1200.0).unwrap();
+        let fit = critical_power(&[five, twenty]).unwrap();
+        let hour = predict_power_from_cp(fit.model, Duration::from_secs(3600)).unwrap();
+        assert!((hour.watts() - 255.0).abs() < 0.5);
     }
 }

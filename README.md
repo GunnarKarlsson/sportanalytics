@@ -9,8 +9,8 @@
 
 Running and cycling analytics in Rust. **0.2** ships Daniels–Gilbert VDOT,
 race-time prediction, training zones, and USATF MLDR 2025 road age grading for
-running, plus FTP, critical power, Coggan zones, Hawley–Noakes VO2, and Martin
-road power–speed for cycling.
+running, plus FTP, critical power, Coggan zones, ACSM / Hawley–Noakes VO2, and
+Martin road power–speed for cycling.
 
 The published crate name is **`sportanalytics`**. Sports live in sibling
 modules (`sportanalytics::running`, `sportanalytics::cycling`); the crate root
@@ -201,10 +201,10 @@ fn main() -> Result<(), sportanalytics::Error> {
 | Function | What data or formula it uses |
 |---|---|
 | `ftp_from_20min` / `ftp_from_protocol` | Operational FTP from field protocols |
-| `critical_power` | Two-parameter CP + W′ |
-| `predict_power` / `predict_from_cp` | CP, %FTP curve, or power Riegel |
+| `critical_power` | Two-parameter CP + W′ (~2–30 min; hour from short pairs biased high) |
+| `predict_power` / `predict_power_from_cp` | CP, %FTP curve, or power Riegel |
 | `training_zones` | Coggan Z1–Z7 + sweet spot (%FTP) |
-| `estimated_vo2max` | Hawley & Noakes MAP → VO2 field estimate |
+| `estimated_vo2max` | ACSM MAP → relative VO2 field estimate |
 | `power_for_speed` / `speed_for_power` | Martin et al. 1998 power balance |
 | `age_equivalent_ftp` | Trained-endurance decline curve (not official tables) |
 
@@ -247,12 +247,14 @@ copied from another crate or from copyrighted pace/power charts.
 - **FTP protocols / Coggan %FTP zones:** public coaching conventions (operational
   threshold and training bands), not laboratory LT and not copyrighted power-profile
   charts.
-- **Critical power:** two-parameter `P = CP + W′/t` linear fit.
-- **VO2 estimate:** Hawley & Noakes field MAP equation.
+- **Critical power:** two-parameter `P = CP + W′/t` linear fit (valid ~2–30 min;
+  hour power from a short+medium pair is biased high).
+- **VO2 estimate:** ACSM relative `10.8 × W/kg + 7`; optional Hawley & Noakes
+  1992 absolute `0.01141 × Wpeak + 0.435` L/min.
 - **Road power–speed:** Martin et al. 1998 cycling power balance (CdA, Crr, grade,
-  wind, drivetrain η).
-- **Age factor:** trained-endurance decline approximation (~0.5%/year after ~35);
-  not VTTA/CTT/WMA tables.
+  wind, drivetrain η); steady-state only (no KE, drafting, or coasting).
+- **Age factor:** trained-endurance decline approximation (linear ~0.5%/year after
+  35; Tanaka & Seals-style); sex unused; not VTTA/CTT/WMA tables.
 
 ## MSRV
 

@@ -12,8 +12,9 @@
 //! Age grading uses the official USATF MLDR 2025 road tables.
 //!
 //! **Cycling:** operational FTP protocols, two-parameter critical power, Coggan
-//! %FTP zones, Hawley–Noakes VO2 estimate, Martin 1998 power–speed, and a
-//! trained-endurance age-factor curve (not official age-grade tables).
+//! %FTP zones, ACSM relative VO2 (plus Hawley–Noakes absolute), Martin 1998
+//! power–speed, and a trained-endurance age-factor curve (not official
+//! age-grade tables).
 //!
 //! Enable the `serde` feature to serialize public types. Default builds stay
 //! dependency-free. New sports are **not** re-exported from the crate root.

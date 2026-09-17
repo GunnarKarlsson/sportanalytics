@@ -196,7 +196,7 @@ impl<'de> serde::Deserialize<'de> for WattsPerKg {
 /// assert!((wkg.value() - 4.0).abs() < 1e-12);
 /// ```
 pub fn watts_per_kg(power: Power, mass: Mass) -> WattsPerKg {
-    WattsPerKg(power.watts() / mass.kg())
+    WattsPerKg::new(power.watts() / mass.kg()).expect("positive power and mass")
 }
 
 /// A single timed effort: duration and mean power.
@@ -271,7 +271,7 @@ impl Effort {
 
     /// Mechanical work `P × t` in joules.
     pub fn work(self) -> Work {
-        Work(self.power.watts() * self.seconds())
+        Work::new(self.power.watts() * self.seconds()).expect("positive power and duration")
     }
 
     /// Specific power for a given mass.

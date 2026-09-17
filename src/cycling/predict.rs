@@ -1,14 +1,17 @@
 //! Power–duration prediction.
 //!
 //! * [`PredictionModel::CriticalPower`] — invert two-parameter CP + W′ (needs ≥ 2 efforts).
-//! * [`PredictionModel::FtpPercent`] — single effort → FTP via protocol, then %FTP(t).
+//! * [`PredictionModel::FtpPercent`] — single effort → FTP via protocol window, then %FTP(t).
 //! * [`PredictionModel::PowerRiegel`] — `P2 = P1 * (t1/t2)^k` with default `k = 0.07`.
+//!
+//! Prefer [`predict_power`] / [`predict_duration`] plus the CP-specific
+//! [`crate::cycling::critical_power()`] / [`crate::cycling::predict_power_from_cp`] pair.
 
 use std::time::Duration;
 
-use super::critical_power::{critical_power, predict_power_from_cp, CriticalPower};
+use super::critical_power::{critical_power, predict_power_from_cp};
 use super::effort::{Effort, Power};
-use super::ftp::{ftp_from_map, ftp_from_protocol, Ftp, FtpProtocol, MAP_TO_FTP};
+use super::ftp::{ftp_from_map, ftp_from_protocol, Ftp, FtpProtocol};
 use crate::Error;
 
 /// Default power-side Riegel exponent (`k = 0.07`).
@@ -18,11 +21,11 @@ pub const RIEGEL_POWER_EXPONENT: f64 = 0.07;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PredictionModel {
-    /// Two-parameter CP + W′ (requires ≥ 2 efforts via [`predict_power_from_efforts`]).
+    /// Two-parameter CP + W′ (requires ≥ 2 efforts).
     CriticalPower,
-    /// Scale a typical %FTP-by-duration curve from one effort.
+    /// Scale a typical %FTP-by-duration curve from one effort in a protocol window.
     FtpPercent,
-    /// Power Riegel: `P2 = P1 * (t1/t2)^k` with [`RIEGEL_POWER_EXPONENT`].
+    /// Power Riegel: `P2 = P1 * (t1/t2)^k` with default `k = 0.07`.
     PowerRiegel,
 }
 
@@ -57,9 +60,13 @@ fn ftp_percent_at(seconds: f64) -> Result<f64, Error> {
     Err(Error::DurationOutOfModelRange)
 }
 
+/// Map a single effort to FTP only when duration sits in a protocol window.
+///
+/// Windows: MAP / RampMap 3–8 min, TwentyMin 15–25 min, SixtyMin 45–75 min.
+/// Durations outside those windows return [`Error::DurationOutOfModelRange`]
+/// (no nearest-neighbour heuristics).
 fn ftp_from_single_effort(effort: Effort) -> Result<Ftp, Error> {
     let t = effort.seconds();
-    // Prefer exact protocol windows; otherwise nearest of 5 / 20 / 60 min heuristics.
     if (15.0 * 60.0..=25.0 * 60.0).contains(&t) {
         return ftp_from_protocol(effort, FtpProtocol::TwentyMin);
     }
@@ -67,20 +74,9 @@ fn ftp_from_single_effort(effort: Effort) -> Result<Ftp, Error> {
         return ftp_from_protocol(effort, FtpProtocol::SixtyMin);
     }
     if (3.0 * 60.0..=8.0 * 60.0).contains(&t) {
-        // ~5 min MAP
         return ftp_from_map(effort.power());
     }
-    // Nearest of 5 / 20 / 60 min.
-    let d5 = (t - 300.0).abs();
-    let d20 = (t - 1200.0).abs();
-    let d60 = (t - 3600.0).abs();
-    if d5 <= d20 && d5 <= d60 {
-        Ftp::new(effort.power().watts() * MAP_TO_FTP)
-    } else if d20 <= d60 {
-        Ftp::new(effort.power().watts() * 0.95)
-    } else {
-        Ftp::new(effort.power().watts())
-    }
+    Err(Error::DurationOutOfModelRange)
 }
 
 fn check_riegel_target(seconds: f64) -> Result<(), Error> {
@@ -91,8 +87,7 @@ fn check_riegel_target(seconds: f64) -> Result<(), Error> {
     }
 }
 
-/// Power Riegel: `P2 = P1 * (t1/t2)^k`.
-pub fn riegel_power(effort: Effort, target: Duration, k: f64) -> Result<Power, Error> {
+fn riegel_power(effort: Effort, target: Duration, k: f64) -> Result<Power, Error> {
     let t2 = target.as_secs_f64();
     check_riegel_target(t2)?;
     if !k.is_finite() || k <= 0.0 {
@@ -109,27 +104,27 @@ fn predict_power_ftp_percent(effort: Effort, target: Duration) -> Result<Power, 
     Power::new(ftp.watts() * pct)
 }
 
-/// Predict mean power at `target` duration from a single effort.
+/// Predict mean power at `target` duration from one or more maximal efforts.
 ///
-/// [`PredictionModel::CriticalPower`] on one effort returns
-/// [`Error::InsufficientEfforts`] — use [`predict_power_from_efforts`].
+/// * [`PredictionModel::CriticalPower`] — fits CP from `efforts` (≥ 2). Hour
+///   predictions from short+medium pairs are model output, not true FTP.
+/// * [`PredictionModel::FtpPercent`] / [`PredictionModel::PowerRiegel`] — use
+///   `efforts[0]` only; empty slice → [`Error::InsufficientEfforts`].
+///
+/// ```
+/// use std::time::Duration;
+/// use sportanalytics::cycling::{predict_power, Effort, PredictionModel};
+///
+/// let twenty = Effort::from_watts_secs(280.0, 1200.0).unwrap();
+/// let hour = predict_power(
+///     &[twenty],
+///     Duration::from_secs(3600),
+///     PredictionModel::FtpPercent,
+/// )
+/// .unwrap();
+/// assert!((hour.watts() - 266.0).abs() < 0.5);
+/// ```
 pub fn predict_power(
-    effort: Effort,
-    target: Duration,
-    model: PredictionModel,
-) -> Result<Power, Error> {
-    match model {
-        PredictionModel::CriticalPower => Err(Error::InsufficientEfforts),
-        PredictionModel::FtpPercent => predict_power_ftp_percent(effort, target),
-        PredictionModel::PowerRiegel => riegel_power(effort, target, RIEGEL_POWER_EXPONENT),
-    }
-}
-
-/// Predict mean power at `target` from one or more efforts.
-///
-/// For [`PredictionModel::CriticalPower`], fits CP from `efforts` (≥ 2).
-/// Other models use `efforts[0]` only.
-pub fn predict_power_from_efforts(
     efforts: &[Effort],
     target: Duration,
     model: PredictionModel,
@@ -141,16 +136,20 @@ pub fn predict_power_from_efforts(
         }
         PredictionModel::FtpPercent | PredictionModel::PowerRiegel => {
             let first = efforts.first().copied().ok_or(Error::InsufficientEfforts)?;
-            predict_power(first, target, model)
+            match model {
+                PredictionModel::FtpPercent => predict_power_ftp_percent(first, target),
+                PredictionModel::PowerRiegel => riegel_power(first, target, RIEGEL_POWER_EXPONENT),
+                PredictionModel::CriticalPower => unreachable!(),
+            }
         }
     }
 }
 
 /// Predict duration at `target_power` from a single effort.
 ///
-/// Critical power requires [`predict_duration`] with a multi-effort path via
-/// fitting first; this function returns [`Error::InsufficientEfforts`] for
-/// [`PredictionModel::CriticalPower`].
+/// [`PredictionModel::CriticalPower`] returns [`Error::InsufficientEfforts`] —
+/// fit with [`crate::cycling::critical_power()`] then use
+/// [`crate::cycling::predict_duration_from_cp`].
 pub fn predict_duration(
     effort: Effort,
     target_power: Power,
@@ -196,33 +195,84 @@ pub fn predict_duration(
     }
 }
 
-/// Predict power at `duration` from an already-fitted CP model.
-pub fn predict_from_cp(cp: CriticalPower, duration: Duration) -> Result<Power, Error> {
-    predict_power_from_cp(cp, duration)
-}
-
 #[cfg(test)]
 mod tests {
     use super::super::critical_power::{critical_power, predict_duration_from_cp};
     use super::*;
+    use std::fs;
+    use std::path::PathBuf;
+
+    fn fixtures_dir() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/cycling")
+    }
 
     #[test]
-    fn twenty_min_ftp_percent_hour() {
-        let twenty = Effort::from_watts_secs(280.0, 1200.0).unwrap();
-        // FTP = 266; 60 min = 100% FTP → 266 W
-        let hour = predict_power(
-            twenty,
-            Duration::from_secs(3600),
-            PredictionModel::FtpPercent,
-        )
-        .unwrap();
-        assert!((hour.watts() - 266.0).abs() < 0.5);
+    fn fixture_predict_power() {
+        let text = fs::read_to_string(fixtures_dir().join("predict.csv")).unwrap();
+        for (i, line) in text.lines().enumerate() {
+            if i == 0 || line.trim().is_empty() {
+                continue;
+            }
+            let c: Vec<_> = line.split(',').collect();
+            let model = match c[0] {
+                "ftp_percent" => PredictionModel::FtpPercent,
+                "riegel" => PredictionModel::PowerRiegel,
+                "cp" => PredictionModel::CriticalPower,
+                other => panic!("unknown model {other}"),
+            };
+            let watts: f64 = c[1].parse().unwrap();
+            let seconds: f64 = c[2].parse().unwrap();
+            let target_s: f64 = c[3].parse().unwrap();
+            let expected: f64 = c[4].parse().unwrap();
+            let effort = Effort::from_watts_secs(watts, seconds).unwrap();
+            let efforts = if model == PredictionModel::CriticalPower {
+                // second effort in cols 5,6 when present
+                let w2: f64 = c[5].parse().unwrap();
+                let s2: f64 = c[6].parse().unwrap();
+                vec![effort, Effort::from_watts_secs(w2, s2).unwrap()]
+            } else {
+                vec![effort]
+            };
+            let p = predict_power(&efforts, Duration::from_secs_f64(target_s), model).unwrap();
+            assert!(
+                (p.watts() - expected).abs() < 0.5,
+                "row {i}: got {} want {expected}",
+                p.watts()
+            );
+        }
+    }
+
+    #[test]
+    fn ftp_percent_rejects_off_window_effort() {
+        let twelve = Effort::from_watts_secs(290.0, 12.0 * 60.0).unwrap();
+        assert_eq!(
+            predict_power(
+                &[twelve],
+                Duration::from_secs(3600),
+                PredictionModel::FtpPercent
+            ),
+            Err(Error::DurationOutOfModelRange)
+        );
+        let thirty_five = Effort::from_watts_secs(270.0, 35.0 * 60.0).unwrap();
+        assert_eq!(
+            predict_power(
+                &[thirty_five],
+                Duration::from_secs(3600),
+                PredictionModel::FtpPercent
+            ),
+            Err(Error::DurationOutOfModelRange)
+        );
     }
 
     #[test]
     fn riegel_power_scales() {
         let twenty = Effort::from_watts_secs(280.0, 1200.0).unwrap();
-        let hour = riegel_power(twenty, Duration::from_secs(3600), RIEGEL_POWER_EXPONENT).unwrap();
+        let hour = predict_power(
+            &[twenty],
+            Duration::from_secs(3600),
+            PredictionModel::PowerRiegel,
+        )
+        .unwrap();
         let expected = 280.0 * (1200.0_f64 / 3600.0).powf(0.07);
         assert!((hour.watts() - expected).abs() < 1e-9);
     }
@@ -232,14 +282,14 @@ mod tests {
         let twenty = Effort::from_watts_secs(280.0, 1200.0).unwrap();
         assert_eq!(
             predict_power(
-                twenty,
+                &[twenty],
                 Duration::from_secs(3600),
                 PredictionModel::CriticalPower
             ),
             Err(Error::InsufficientEfforts)
         );
         let five = Effort::from_watts_secs(340.0, 300.0).unwrap();
-        let p = predict_power_from_efforts(
+        let p = predict_power(
             &[five, twenty],
             Duration::from_secs(3600),
             PredictionModel::CriticalPower,
@@ -256,6 +306,14 @@ mod tests {
         assert_eq!(
             predict_duration_from_cp(fit.model, fit.model.cp),
             Err(Error::UnsolvablePowerDuration)
+        );
+    }
+
+    #[test]
+    fn empty_efforts_insufficient() {
+        assert_eq!(
+            predict_power(&[], Duration::from_secs(3600), PredictionModel::FtpPercent),
+            Err(Error::InsufficientEfforts)
         );
     }
 }

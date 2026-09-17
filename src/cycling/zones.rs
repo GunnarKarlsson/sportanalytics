@@ -22,6 +22,15 @@ pub struct PowerRange {
 
 impl PowerRange {
     /// Both edges as W/kg for `mass`.
+    ///
+    /// ```
+    /// use sportanalytics::cycling::{training_zones, Ftp, Mass};
+    ///
+    /// let z = training_zones(Ftp::new(250.0).unwrap());
+    /// let (lo, hi) = z.endurance.watts_per_kg(Mass::from_kg(70.0).unwrap());
+    /// assert!((lo.value() - 2.0).abs() < 0.01);
+    /// assert!((hi.value() - 187.5 / 70.0).abs() < 1e-12);
+    /// ```
     pub fn watts_per_kg(self, mass: Mass) -> (WattsPerKg, WattsPerKg) {
         (
             WattsPerKg::new(self.easy_end.watts() / mass.kg()).expect("positive power and mass"),
@@ -186,6 +195,9 @@ fn range_from_pct(ftp_w: f64, lo: f64, hi: f64) -> PowerRange {
 /// | Z5 VO2max | 106–120 |
 /// | Z6 anaerobic | 121–150 |
 /// | Z7 neuromuscular | ≥ 151 |
+///
+/// One-watt gaps such as 55% → 56% are the printed Coggan convention, not
+/// missing watts.
 ///
 /// ```
 /// use sportanalytics::cycling::{training_zones, Ftp};

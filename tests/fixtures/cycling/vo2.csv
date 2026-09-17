@@ -1,2 +1,3 @@
-mass_kg,map_watts,vo2
-70,343,59.91
+equation,mass_kg,map_watts,vo2
+acsm,70,343,59.91
+hawley,70,343,62.12

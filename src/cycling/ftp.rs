@@ -70,7 +70,12 @@ pub enum FtpProtocol {
     TwentyMin,
     /// ~8-minute test: `FTP = 0.90 × P`.
     EightMin,
-    /// Ramp / MAP mean: `FTP = MAP / 1.20`.
+    /// Mean power treated as MAP / Wpeak (`FTP = MAP / 1.20`).
+    ///
+    /// Duration window is **3–8 min**. Input is the mean power of that MAP /
+    /// Wpeak effort — **not** the TrainingPeaks / Wahoo “75% of 1-min ramp peak”
+    /// ramp-test convention. Do not silently treat an arbitrary 3–8 min effort
+    /// as MAP unless that is what you measured.
     RampMap,
     /// Treat effort power as CP: `FTP = 0.96 × P`.
     CriticalPower,
@@ -117,8 +122,9 @@ pub fn ftp_from_60min(effort: Effort) -> Result<Ftp, Error> {
 /// FTP from a maximal effort using `protocol`.
 ///
 /// Duration windows: TwentyMin 15–25 min, SixtyMin 45–75 min, EightMin 6–10 min,
-/// RampMap 3–8 min. [`FtpProtocol::CriticalPower`] has no duration window
-/// (effort power is treated as CP).
+/// RampMap 3–8 min (MAP / Wpeak mean — see [`FtpProtocol::RampMap`]).
+/// [`FtpProtocol::CriticalPower`] has no duration window (effort power is
+/// treated as CP).
 pub fn ftp_from_protocol(effort: Effort, protocol: FtpProtocol) -> Result<Ftp, Error> {
     let t = effort.seconds();
     let p = effort.power().watts();
@@ -176,6 +182,7 @@ mod tests {
                 "twenty" => FtpProtocol::TwentyMin,
                 "sixty" => FtpProtocol::SixtyMin,
                 "eight" => FtpProtocol::EightMin,
+                "ramp" => FtpProtocol::RampMap,
                 other => panic!("unknown protocol {other}"),
             };
             let watts: f64 = cols[1].parse().unwrap();
