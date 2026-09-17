@@ -20,24 +20,24 @@ The published crate name is **`sportanalytics`**. This repository is
 cargo add sportanalytics
 ```
 
-Zero deps core lib:
+Default (no extra dependencies):
 ```toml
 [dependencies]
-sportanalytics = "0.1" 
+sportanalytics = "0.1"
 ```
 
-Add serde dep for JSON parsing:
+Optional JSON support:
 ```toml
 [dependencies]
-# sportanalytics = { version = "0.1", features = ["serde"] }
+sportanalytics = { version = "0.1", features = ["serde"] }
 ```
 
-Use:
+Then in code:
 ```rust
 use sportanalytics::running::*;
 ```
 
-The same items are also available from `sportanalytics::prelude`. 
+The same items are also available from `sportanalytics::prelude`.
 The crate root re-exports only `sportanalytics::Error`.
 
 ## Quick start
@@ -105,19 +105,21 @@ use sportanalytics::running::{
     age_equivalent, age_grade, Distance, Gender, RaceTime,
 };
 
-let race_time = RaceTime::from_hms(Distance::FiveK, 0, 20, 0)?;
-let age_grade = age_grade(race_time, 42, Gender::Male, Some(25))?;
-println!(
-    "{:.1}% {} | open eq {} | table {:?}",
-    age_grade.percent,
-    age_grade.level.label(),
-    age_grade.open_equivalent_hms(),
-    age_grade.table
-);
+fn main() -> Result<(), sportanalytics::Error> {
+    let race_time = RaceTime::from_hms(Distance::FiveK, 0, 20, 0)?;
+    let ag = age_grade(race_time, 42, Gender::Male, Some(25))?;
+    println!(
+        "{:.1}% {} | open eq {} | table {:?}",
+        ag.percent,
+        ag.level.label(),
+        ag.open_equivalent_hms(),
+        ag.table
+    );
 
-let as_25 = age_equivalent(race_time, 42, Gender::Male, 25)?;
-println!("equivalent at 25: {as_25:.1}s");
-   
+    let as_25 = age_equivalent(race_time, 42, Gender::Male, 25)?;
+    println!("equivalent at 25: {as_25:.1}s");
+    Ok(())
+}
 ```
 
 - Named distances are 3K, 5K, 10K, half marathon, and marathon; other lengths use
