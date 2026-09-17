@@ -62,11 +62,7 @@ impl fmt::Display for Error {
     }
 }
 
-impl StdError for Error {
-    fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        None
-    }
-}
+impl StdError for Error {}
 
 #[cfg(test)]
 mod tests {
@@ -124,9 +120,6 @@ mod tests {
     fn implements_std_error() {
         let err: Box<dyn StdError> = Box::new(Error::InvalidPower);
         assert!(err.source().is_none());
-        assert!(Error::NonPositiveTime.source().is_none());
-        assert!(Error::InvalidHms.source().is_none());
-        assert!(Error::AgeOutOfRange { min: 15, max: 90 }.source().is_none());
     }
 
     #[cfg(feature = "serde")]
